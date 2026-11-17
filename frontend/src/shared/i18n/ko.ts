@@ -12,6 +12,11 @@ export const ko: Record<MessageKey, string> = {
   "common.back": "돌아가기",
   "common.kst": "모든 시간은 한국 시간(KST) 기준입니다.",
   "common.loading": "불러오는 중",
+  "a11y.pages": "페이지",
+  "a11y.myPage": "마이 페이지",
+  "a11y.home": "TicketRush 홈",
+  "a11y.main": "주 메뉴",
+  "a11y.menu": "메뉴",
 
   "nav.events": "공연",
   "nav.manage": "공연 관리",
@@ -79,6 +84,10 @@ export const ko: Record<MessageKey, string> = {
   "buy.add": "{name} 한 장 추가",
   "buy.remove": "{name} 한 장 빼기",
   "buy.days": "{n}일",
+  "buy.unit.d": "일",
+  "buy.unit.h": "시간",
+  "buy.unit.m": "분",
+  "buy.unit.s": "초",
 
   "auth.login": "로그인",
   "auth.loginTitle": "다시 만나서 반가워요",

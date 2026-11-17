@@ -121,10 +121,10 @@ function Countdown({ ms }: { ms: number }) {
   const t = useT();
   const p = countdownParts(ms);
   const cells = [
-    ...(p.days > 0 ? [{ v: String(p.days), l: "D" }] : []),
-    { v: p.h, l: "H" },
-    { v: p.m, l: "M" },
-    { v: p.s, l: "S" },
+    ...(p.days > 0 ? [{ v: String(p.days), l: t("buy.unit.d") }] : []),
+    { v: p.h, l: t("buy.unit.h") },
+    { v: p.m, l: t("buy.unit.m") },
+    { v: p.s, l: t("buy.unit.s") },
   ];
   return (
     <div className="bg-hot mx-4 mt-4 rounded-2xl p-4 text-white">

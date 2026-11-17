@@ -39,31 +39,55 @@ export function LocaleSwitch({ className }: { className?: string }) {
   );
 }
 
-const THEME_ORDER: Theme[] = ["light", "dark", "system"];
-const THEME_ICON = { light: Sun, dark: Moon, system: Monitor };
+const THEMES: { value: Theme; Icon: typeof Sun }[] = [
+  { value: "light", Icon: Sun },
+  { value: "dark", Icon: Moon },
+  { value: "system", Icon: Monitor },
+];
 
-/** One button that cycles light → dark → system. */
-export function ThemeToggle({ className }: { className?: string }) {
+/**
+ * Light | Dark | System switch. Every option is visible, so it's obvious what it does.
+ * `withLabels` shows the words too (used in the mobile menu).
+ */
+export function ThemeSwitch({
+  className,
+  withLabels = false,
+}: {
+  className?: string;
+  withLabels?: boolean;
+}) {
   const t = useT();
   const mounted = useMounted();
   const theme = usePrefsStore((s) => s.theme);
   const setTheme = usePrefsStore((s) => s.setTheme);
   const current: Theme = mounted ? theme : "system";
-  const next = THEME_ORDER[(THEME_ORDER.indexOf(current) + 1) % THEME_ORDER.length];
-  const Icon = THEME_ICON[current];
-  const label = `${t("nav.theme")}: ${t(`nav.theme.${current}`)}`;
 
   return (
-    <button
-      onClick={() => setTheme(next)}
-      aria-label={label}
-      title={label}
-      className={cn(
-        "border-line bg-surface text-ink hover:border-ink/40 flex size-9 items-center justify-center rounded-full border transition",
-        className,
-      )}
+    <div
+      role="radiogroup"
+      aria-label={t("nav.theme")}
+      className={cn("border-line bg-surface flex rounded-full border p-0.5", className)}
     >
-      <Icon className="size-4" />
-    </button>
+      {THEMES.map(({ value, Icon }) => {
+        const label = t(`nav.theme.${value}`);
+        return (
+          <button
+            key={value}
+            role="radio"
+            aria-checked={current === value}
+            aria-label={label}
+            title={label}
+            onClick={() => setTheme(value)}
+            className={cn(
+              "text-muted hover:text-ink aria-checked:bg-ink aria-checked:text-bg flex items-center gap-1.5 rounded-full text-xs font-bold transition-colors",
+              withLabels ? "px-3 py-1.5" : "size-7 justify-center",
+            )}
+          >
+            <Icon className="size-3.5" />
+            {withLabels && label}
+          </button>
+        );
+      })}
+    </div>
   );
 }

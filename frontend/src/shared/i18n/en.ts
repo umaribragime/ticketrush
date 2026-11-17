@@ -11,6 +11,11 @@ export const en = {
   "common.back": "Back",
   "common.kst": "All times are Korea time (KST).",
   "common.loading": "Loading",
+  "a11y.pages": "Pages",
+  "a11y.myPage": "My page",
+  "a11y.home": "TicketRush home",
+  "a11y.main": "Main menu",
+  "a11y.menu": "Menu",
 
   // nav
   "nav.events": "Events",
@@ -84,6 +89,10 @@ export const en = {
   "buy.add": "Add one {name}",
   "buy.remove": "Remove one {name}",
   "buy.days": "{n}d",
+  "buy.unit.d": "DAYS",
+  "buy.unit.h": "HRS",
+  "buy.unit.m": "MIN",
+  "buy.unit.s": "SEC",
 
   // auth
   "auth.login": "Log in",

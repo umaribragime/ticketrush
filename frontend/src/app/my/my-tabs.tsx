@@ -14,7 +14,7 @@ export function MyTabs() {
   return (
     <nav
       className="border-line bg-surface mb-10 inline-flex rounded-full border p-1"
-      aria-label="My page"
+      aria-label={t("a11y.myPage")}
     >
       {tabs.map((tab) => {
         const active = pathname.startsWith(tab.href);

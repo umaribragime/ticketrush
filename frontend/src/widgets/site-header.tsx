@@ -11,7 +11,7 @@ import { useSession } from "@/shared/session/use-session";
 import { useSessionStore } from "@/shared/session/session-store";
 import { buttonClass } from "@/shared/ui/button";
 import { Logo } from "@/shared/ui/logo";
-import { LocaleSwitch, ThemeToggle } from "@/shared/ui/prefs-controls";
+import { LocaleSwitch, ThemeSwitch } from "@/shared/ui/prefs-controls";
 
 export function SiteHeader() {
   return (
@@ -84,7 +84,7 @@ function Nav() {
   return (
     <>
       {/* desktop */}
-      <nav className="hidden flex-1 items-center gap-1 md:flex" aria-label="Main">
+      <nav className="hidden flex-1 items-center gap-1 md:flex" aria-label={t("a11y.main")}>
         <div className="ml-6 flex flex-1 items-center gap-1">
           {links.map((l) => (
             <NavLink key={l.href} href={l.href} active={isActive(l.href)}>
@@ -94,19 +94,19 @@ function Nav() {
         </div>
         <div className="flex items-center gap-2">
           <LocaleSwitch />
-          <ThemeToggle />
+          <ThemeSwitch />
           {authArea}
         </div>
       </nav>
 
       {/* mobile */}
       <div className="ml-auto flex items-center gap-2 md:hidden">
-        <ThemeToggle />
+        <ThemeSwitch />
         <button
           onClick={() => setOpen((o) => !o)}
           aria-expanded={open}
           aria-controls="mobile-menu"
-          aria-label="Menu"
+          aria-label={t("a11y.menu")}
           className="border-line bg-surface flex size-9 items-center justify-center rounded-full border"
         >
           {open ? <X className="size-4" /> : <Menu className="size-4" />}
@@ -117,7 +117,7 @@ function Nav() {
           id="mobile-menu"
           className="border-line bg-bg animate-rise absolute inset-x-0 top-16 border-b px-4 pt-3 pb-6 shadow-xl md:hidden"
         >
-          <nav className="flex flex-col gap-1" aria-label="Main">
+          <nav className="flex flex-col gap-1" aria-label={t("a11y.main")}>
             {links.map((l) => (
               <NavLink
                 key={l.href}
@@ -130,9 +130,12 @@ function Nav() {
               </NavLink>
             ))}
           </nav>
-          <div className="border-line mt-4 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
-            <LocaleSwitch />
-            <div className="flex items-center gap-2">{authArea}</div>
+          <div className="border-line mt-4 flex flex-col gap-4 border-t pt-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <LocaleSwitch />
+              <ThemeSwitch withLabels />
+            </div>
+            <div className="flex items-center justify-end gap-2">{authArea}</div>
           </div>
         </div>
       )}

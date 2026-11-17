@@ -29,8 +29,17 @@ export function AuthShell({
 
         {/* floating tickets */}
         <div className="relative h-56" aria-hidden>
-          <FakeTicket className="absolute top-6 left-4 -rotate-12" code="A-17" />
-          <FakeTicket className="absolute top-20 left-36 rotate-6" code="VIP" volt />
+          <FakeTicket
+            className="absolute top-6 left-4 -rotate-12"
+            code="A-17"
+            admit={t("ticket.admit")}
+          />
+          <FakeTicket
+            className="absolute top-20 left-36 rotate-6"
+            code="VIP"
+            volt
+            admit={t("ticket.admit")}
+          />
         </div>
 
         <div>
@@ -54,10 +63,12 @@ function FakeTicket({
   className,
   code,
   volt,
+  admit,
 }: {
   className?: string;
   code: string;
   volt?: boolean;
+  admit: string;
 }) {
   return (
     <div
@@ -67,7 +78,7 @@ function FakeTicket({
     >
       <Ticket className="size-8 shrink-0" />
       <div className="border-l-2 border-dashed border-current/30 pl-3">
-        <p className="text-[10px] font-bold tracking-widest opacity-60">ADMIT ONE</p>
+        <p className="text-[10px] font-bold tracking-widest opacity-60">{admit}</p>
         <p className="font-display text-2xl font-bold">{code}</p>
       </div>
     </div>

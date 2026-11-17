@@ -48,7 +48,7 @@ export function EventGrid({
       )}
 
       {result.totalPages > 1 && (
-        <nav className="flex justify-center gap-2" aria-label="Pages">
+        <nav className="flex justify-center gap-2" aria-label={t("a11y.pages")}>
           {Array.from({ length: result.totalPages }, (_, i) => (
             <Link
               key={i}
