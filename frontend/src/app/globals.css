@@ -1,0 +1,161 @@
+@import "tailwindcss";
+
+/* Dark mode follows the "dark" class on <html> (set by the theme switch), not only the OS. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * TicketRush design tokens.
+ * Personality: concert-night energy — electric violet, coral heat, and a "volt" lime highlighter
+ * on warm paper (light) or deep ink (dark).
+ */
+:root {
+  --bg: #f5f2eb;
+  --surface: #ffffff;
+  --surface-2: #ede8de;
+  --ink: #16131d;
+  --muted: #6c6578;
+  --line: #e1dacd;
+  --accent: #5b3df5;
+  --accent-hover: #4a2ee0;
+  --accent-soft: #ebe6ff;
+  --accent-ink: #4326d9;
+  --hot: #ff4f2e;
+  --hot-soft: #ffe7e1;
+  --volt: #c9f23d;
+  --success: #12924a;
+  --success-soft: #dcf5e6;
+  --danger: #e0312f;
+  --danger-soft: #fde4e3;
+  --warn: #c2620a;
+  --warn-soft: #fff0dd;
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #0c0a11;
+  --surface: #16131e;
+  --surface-2: #211c2c;
+  --ink: #f4f1fb;
+  --muted: #a09aaf;
+  --line: #2e2839;
+  --accent: #8e74ff;
+  --accent-hover: #a28dff;
+  --accent-soft: #261e47;
+  --accent-ink: #b9a9ff;
+  --hot: #ff6b4f;
+  --hot-soft: #3a1a14;
+  --volt: #d4ff4a;
+  --success: #3ddc84;
+  --success-soft: #0f2a1c;
+  --danger: #ff5b57;
+  --danger-soft: #36161a;
+  --warn: #ffab4a;
+  --warn-soft: #33220f;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --font-sans:
+    "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui,
+    "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  --font-display:
+    var(--font-space-grotesk), "Pretendard Variable", Pretendard, system-ui, sans-serif;
+
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
+  --color-hot: var(--hot);
+  --color-hot-soft: var(--hot-soft);
+  --color-volt: var(--volt);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  /* text that sits on volt is always dark */
+  --color-on-volt: #16131d;
+
+  --animate-marquee: marquee 28s linear infinite;
+  --animate-rise: rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-pop: pop 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes pop {
+    from {
+      opacity: 0;
+      transform: scale(0.94);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+
+body {
+  @apply bg-bg text-ink antialiased;
+  word-break: keep-all; /* Korean: don't break words in the middle */
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+
+/* Soft grain + glow behind everything, so flat colors feel alive. */
+.backdrop-glow {
+  background:
+    radial-gradient(
+      60rem 30rem at 85% -10%,
+      color-mix(in oklab, var(--accent) 18%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      40rem 24rem at -10% 10%,
+      color-mix(in oklab, var(--hot) 12%, transparent),
+      transparent 70%
+    );
+}
+
+/* Ticket stub: round notches cut on both sides at --notch-y. */
+.ticket-notch {
+  --notch: 11px;
+  mask:
+    radial-gradient(circle var(--notch) at 0 var(--notch-y, 50%), transparent 98%, #000) left / 51%
+      100% no-repeat,
+    radial-gradient(circle var(--notch) at 100% var(--notch-y, 50%), transparent 98%, #000) right /
+      51% 100% no-repeat;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -121,9 +121,16 @@ Start simple: **one Spring Boot app + one PostgreSQL**. A "modular monolith"
 (one app, but code split cleanly by feature) — not microservices yet.
 
 ```
-[ Client (Postman / later React) ]
-              │ HTTP + JWT
-              ▼
+[ Browser ]
+     │  pages                         │  /api/* (XHR, JWT header)
+     ▼                                ▼
+┌──────────────────────────────────────────────┐
+│  Next.js frontend (port 3000)                │
+│  - Server Components render public pages     │──── server fetch ────┐
+│  - rewrite /api/* → Spring (same origin)     │                      │
+└──────────────────────────────────────────────┘                      │
+              │ HTTP + JWT                                            │
+              ▼                                                       ▼
 ┌───────────────────────────────┐
 │     TicketRush (Spring Boot)  │
 │  user │ event │ order │ ticket│   ← packages by feature

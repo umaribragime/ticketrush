@@ -25,7 +25,7 @@ Tick a box only when you have proof AND can explain it in an interview.
 - [ ] Monitoring (Prometheus, Grafana) — v7
 - [ ] Using AI in the product (LLM API) — v9
 - [ ] AWS deploy — v10
-- [ ] Frontend attached (React) — v10
+- [x] Frontend attached (React / Next.js + TypeScript) — done early with v1
 - [ ] Using AI tools well: you review and fix what AI writes yourself — every version
 
 ## Rules
@@ -47,7 +47,7 @@ Tick a box only when you have proof AND can explain it in an interview.
 | v7 | "Where is it slow? Is it healthy?" | k6, indexes, EXPLAIN, Prometheus + Grafana | Dashboard + query time before/after |
 | v8 | Users want to pick their seat | Venue/Section/Seat, seat-level locking | Two users, one seat → one wins |
 | v9 | Users have questions about events | Spring AI: event Q&A assistant | Demo |
-| v10 | Nobody can see it | AWS deploy, React frontend | Live URL |
+| v10 | Nobody can see it | AWS deploy (frontend already built in v1) | Live URL |
 
 ## v1 bricks (in order)
 - [x] 1. Create the project (Spring Initializr) + PostgreSQL in docker-compose → app starts
@@ -61,4 +61,5 @@ Tick a box only when you have proof AND can explain it in an interview.
 
 ## Status
 - [x] v1 — done 2026-11-18 (21 integration tests, runs on PostgreSQL 17)
+- [x] v1 frontend — done 2026-11-18 (Next.js 16, 15 tests, tested in the browser against the real backend)
 - [ ] v2 — next: overselling under concurrency
