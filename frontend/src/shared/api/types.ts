@@ -32,6 +32,13 @@ export interface User {
   createdAt: string;
 }
 
+export interface UserSummary {
+  ticketCount: number;
+  upcomingTicketCount: number;
+  orderCount: number;
+  organizedEventCount: number;
+}
+
 export interface TokenResponse {
   accessToken: string;
   tokenType: string;

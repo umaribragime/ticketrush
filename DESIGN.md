@@ -162,3 +162,16 @@ src/main/resources/db/migration/V1__init_schema.sql   ← the real schema
 ## 5. Future model additions (not v1)
 - v5: `PAYMENT` (id, order_id, provider, amount, status, idempotency_key)
 - v8: `VENUE` → `SECTION` → `SEAT`, and `TICKET.seat_id` (seat selection)
+
+## 6. Stock under concurrency (v2)
+
+Taking tickets out of stock is the hottest write in the system (everyone hits the same `ticket_types` row
+at ticket open). `StockService.reserve()` runs inside the order transaction and uses one of:
+
+- **ATOMIC (default):** `UPDATE ticket_types SET sold = sold + :q, version = version + 1
+  WHERE id = :id AND sold + :q <= total_available` → 1 row = reserved, 0 rows = sold out.
+- **PESSIMISTIC:** `SELECT … FOR UPDATE` (via `EntityManager.refresh` with a lock), then check in Java.
+- **OPTIMISTIC:** compare-and-set on `version`, retry with random back-off, give up with `STOCK_BUSY`.
+
+Reservation order is sorted by ticket type id (no deadlocks). A `CHECK (0 <= sold <= total_available)`
+constraint guards the column. Proof: `concurrency/*RaceTest` on Testcontainers PostgreSQL.

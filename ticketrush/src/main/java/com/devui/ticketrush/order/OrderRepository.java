@@ -15,4 +15,6 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
 
     @EntityGraph(attributePaths = {"event", "tickets", "tickets.ticketType", "tickets.qrCode"})
     Optional<Order> findDetailedById(UUID id);
+
+    long countByUserId(UUID userId);
 }

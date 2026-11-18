@@ -14,9 +14,9 @@ Tick a box only when you have proof AND can explain it in an interview.
 - [ ] Git, clean commits, PRs — every version
 
 **Extra points (우대사항)**
-- [ ] Test code (unit + integration) — every version, focus v1–v3
+- [x] Test code (unit + integration + race tests on Testcontainers) — every version
 - [x] Spring Security + JWT login — v1
-- [ ] Concurrency / large traffic (동시성, 대용량 트래픽) — v2, v4, v8
+- [x] Concurrency / large traffic (동시성, 대용량 트래픽) — v2 done (v4, v8 next)
 - [ ] Docker + CI/CD (GitHub Actions) — v3
 - [ ] Redis cache + waiting queue — v4
 - [ ] Payment / order flow (주문·결제) — v5
@@ -63,4 +63,5 @@ Tick a box only when you have proof AND can explain it in an interview.
 ## Status
 - [x] v1 — done 2026-11-18 (21 integration tests, runs on PostgreSQL 17)
 - [x] v1 frontend — done 2026-11-18 (Next.js 16, 15 tests, tested in the browser against the real backend)
-- [ ] v2 — next: overselling under concurrency
+- [x] v2 — done 2026-11-18: 3 stock strategies, race tests on real PostgreSQL (1,000 buyers / 100 seats)
+- [ ] v3 — next: Docker images + GitHub Actions CI

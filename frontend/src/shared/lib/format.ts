@@ -1,58 +1,73 @@
 import type { Locale } from "@/shared/prefs/prefs-store";
 
-/** Events happen in Seoul, so dates are always shown in Korea time — for every visitor. */
-const TIME_ZONE = "Asia/Seoul";
+/**
+ * Dates are always shown in Korea time (events happen in Seoul), and they are built by hand.
+ *
+ * Why not Intl.DateTimeFormat? Node.js (server) and each browser ship different ICU versions, so the
+ * same call can give "Dec 24, 2026, 19:00" on the server and "Dec 24, 2026 at 19:00" in the browser.
+ * That text difference breaks hydration. Korea has no daylight saving time, so UTC+9 is always right.
+ */
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 
-const cache = new Map<string, Intl.DateTimeFormat>();
-function dtf(locale: Locale, options: Intl.DateTimeFormatOptions) {
-  const key = locale + JSON.stringify(options);
-  let f = cache.get(key);
-  if (!f) {
-    f = new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
-      timeZone: TIME_ZONE,
-      ...options,
-    });
-    cache.set(key, f);
-  }
-  return f;
+const EN_MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+const EN_WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const KO_WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+
+const pad = (n: number) => String(n).padStart(2, "0");
+
+/** The wall-clock time in Seoul for an ISO instant. */
+function kst(iso: string) {
+  const d = new Date(new Date(iso).getTime() + KST_OFFSET_MS);
+  return {
+    year: d.getUTCFullYear(),
+    month: d.getUTCMonth(), // 0-11
+    day: d.getUTCDate(),
+    weekday: d.getUTCDay(), // 0 = Sunday
+    hh: pad(d.getUTCHours()),
+    mm: pad(d.getUTCMinutes()),
+  };
 }
 
-/** "Thu, Dec 24, 19:00 KST" / "12월 24일 (목) 19:00" */
+/** "Thu, Dec 24, 2026 · 19:00 KST" / "2026년 12월 24일 (목) 19:00" */
 export function formatDateTime(iso: string, locale: Locale = "en"): string {
-  const date = new Date(iso);
+  const k = kst(iso);
   if (locale === "ko") {
-    return dtf("ko", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      weekday: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }).format(date);
+    return `${k.year}년 ${k.month + 1}월 ${k.day}일 (${KO_WEEKDAYS[k.weekday]}) ${k.hh}:${k.mm}`;
   }
-  return `${dtf("en", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(date)} KST`;
+  return `${EN_WEEKDAYS[k.weekday]}, ${EN_MONTHS[k.month]} ${k.day}, ${k.year} · ${k.hh}:${k.mm} KST`;
+}
+
+/** "Nov 18, 2026" / "2026년 11월 18일" */
+export function formatDate(iso: string, locale: Locale = "en"): string {
+  const k = kst(iso);
+  return locale === "ko"
+    ? `${k.year}년 ${k.month + 1}월 ${k.day}일`
+    : `${EN_MONTHS[k.month]} ${k.day}, ${k.year}`;
 }
 
 /** Parts for the big date block on event cards: { month: "DEC", day: "24", weekday: "THU" } */
 export function dateParts(iso: string, locale: Locale = "en") {
-  const date = new Date(iso);
-  const tag = locale === "ko" ? "ko" : "en";
-  return {
-    month: dtf(tag, { month: locale === "ko" ? "long" : "short" })
-      .format(date)
-      .toUpperCase(),
-    day: dtf(tag, { day: "numeric" }).format(date).replace(/\D/g, ""),
-    weekday: dtf(tag, { weekday: "short" }).format(date).toUpperCase(),
-  };
+  const k = kst(iso);
+  return locale === "ko"
+    ? { month: `${k.month + 1}월`, day: String(k.day), weekday: KO_WEEKDAYS[k.weekday] }
+    : {
+        month: EN_MONTHS[k.month].toUpperCase(),
+        day: String(k.day),
+        weekday: EN_WEEKDAYS[k.weekday].toUpperCase(),
+      };
 }
 
 /** "₩165,000" / "165,000원" */

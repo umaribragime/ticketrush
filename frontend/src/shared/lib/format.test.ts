@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   dateParts,
+  formatDate,
+  formatDateTime,
   formatPrice,
   fromKstInput,
   posterColors,
@@ -13,6 +15,13 @@ describe("format", () => {
   it("formats prices per language", () => {
     expect(formatPrice(165000, "en")).toBe("₩165,000");
     expect(formatPrice(165000, "ko")).toBe("165,000원");
+  });
+
+  it("formats date-times the same way everywhere (no Intl → no hydration mismatch)", () => {
+    expect(formatDateTime("2026-12-24T10:00:00Z", "en")).toBe("Thu, Dec 24, 2026 · 19:00 KST");
+    expect(formatDateTime("2026-12-24T10:00:00Z", "ko")).toBe("2026년 12월 24일 (목) 19:00");
+    expect(formatDate("2026-11-17T15:30:00Z", "en")).toBe("Nov 18, 2026"); // already the 18th in Seoul
+    expect(formatDateTime("2026-12-31T15:00:00Z", "en")).toBe("Fri, Jan 1, 2027 · 00:00 KST"); // never "24:00"
   });
 
   it("shows dates in Korea time for everyone", () => {

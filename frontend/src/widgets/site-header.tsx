@@ -2,16 +2,19 @@
 
 import { Suspense, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
+import { usePathname } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { LogOut, Menu, X } from "lucide-react";
+import { meQueries } from "@/entities/user/api";
+import { useLogout } from "@/features/auth/use-logout";
 import { cn } from "@/shared/lib/cn";
 import { useT } from "@/shared/i18n/use-t";
 import { useSession } from "@/shared/session/use-session";
-import { useSessionStore } from "@/shared/session/session-store";
 import { buttonClass } from "@/shared/ui/button";
 import { Logo } from "@/shared/ui/logo";
 import { LocaleSwitch, ThemeSwitch } from "@/shared/ui/prefs-controls";
+import { Avatar } from "@/shared/ui/avatar";
+import { UserMenu } from "./user-menu";
 
 export function SiteHeader() {
   return (
@@ -31,55 +34,41 @@ function Nav() {
   const t = useT();
   const session = useSession();
   const pathname = usePathname();
-  const router = useRouter();
-  const queryClient = useQueryClient();
-  const logout = useSessionStore((s) => s.logout);
+  const logout = useLogout();
   const [open, setOpen] = useState(false);
+  const authed = session.status === "authenticated";
 
+  // main links (top bar); personal pages live in the user menu
   const links: { href: string; label: string }[] = [{ href: "/", label: t("nav.events") }];
-  if (session.status === "authenticated") {
+  if (authed) {
+    links.push({ href: "/my/tickets", label: t("nav.myTickets") });
     if (session.hasRole("ORGANIZER")) links.push({ href: "/organizer", label: t("nav.manage") });
     if (session.hasRole("STAFF") || session.hasRole("ORGANIZER"))
       links.push({ href: "/check-in", label: t("nav.checkIn") });
-    links.push({ href: "/my/tickets", label: t("nav.myTickets") });
   }
+  // the mobile panel also lists the personal pages
+  const mobileLinks = authed
+    ? [
+        ...links,
+        { href: "/my/orders", label: t("nav.orders") },
+        { href: "/account", label: t("nav.account") },
+      ]
+    : links;
+
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" || pathname.startsWith("/events") : pathname.startsWith(href);
+  const close = () => setOpen(false);
 
-  const handleLogout = () => {
-    setOpen(false);
-    logout();
-    queryClient.clear(); // forget the previous user's cached data
-    router.push("/");
-  };
-
-  const authArea =
-    session.status === "authenticated" ? (
-      <>
-        <span className="text-muted hidden text-sm lg:inline">
-          {t("nav.greeting", { name: session.user.name })}
-        </span>
-        <button onClick={handleLogout} className={buttonClass("outline", "sm")}>
-          <LogOut className="size-4" />
-          {t("nav.logout")}
-        </button>
-      </>
-    ) : session.status === "anonymous" ? (
-      <>
-        <Link href="/login" onClick={() => setOpen(false)} className={buttonClass("ghost", "sm")}>
-          {t("nav.login")}
-        </Link>
-        <Link
-          href="/signup"
-          onClick={() => setOpen(false)}
-          className={buttonClass("primary", "sm")}
-        >
-          {t("nav.signup")}
-        </Link>
-      </>
-    ) : (
-      <span className="h-9 w-40" aria-hidden />
-    );
+  const guestButtons = (
+    <>
+      <Link href="/login" onClick={close} className={buttonClass("ghost", "sm")}>
+        {t("nav.login")}
+      </Link>
+      <Link href="/signup" onClick={close} className={buttonClass("primary", "sm")}>
+        {t("nav.signup")}
+      </Link>
+    </>
+  );
 
   return (
     <>
@@ -95,7 +84,13 @@ function Nav() {
         <div className="flex items-center gap-2">
           <LocaleSwitch />
           <ThemeSwitch />
-          {authArea}
+          {authed ? (
+            <UserMenu claims={session.user} />
+          ) : session.status === "anonymous" ? (
+            guestButtons
+          ) : (
+            <span className="h-9 w-40" aria-hidden />
+          )}
         </div>
       </nav>
 
@@ -115,17 +110,14 @@ function Nav() {
       {open && (
         <div
           id="mobile-menu"
-          className="border-line bg-bg animate-rise absolute inset-x-0 top-16 border-b px-4 pt-3 pb-6 shadow-xl md:hidden"
+          className="border-line bg-bg animate-rise absolute inset-x-0 top-16 max-h-[calc(100dvh-4rem)] overflow-y-auto border-b px-4 pt-3 pb-6 shadow-xl md:hidden"
         >
+          {authed && (
+            <MobileUserCard fallbackName={session.user.name} fallbackEmail={session.user.email} />
+          )}
           <nav className="flex flex-col gap-1" aria-label={t("a11y.main")}>
-            {links.map((l) => (
-              <NavLink
-                key={l.href}
-                href={l.href}
-                active={isActive(l.href)}
-                onClick={() => setOpen(false)}
-                big
-              >
+            {mobileLinks.map((l) => (
+              <NavLink key={l.href} href={l.href} active={isActive(l.href)} onClick={close} big>
                 {l.label}
               </NavLink>
             ))}
@@ -135,11 +127,45 @@ function Nav() {
               <LocaleSwitch />
               <ThemeSwitch withLabels />
             </div>
-            <div className="flex items-center justify-end gap-2">{authArea}</div>
+            <div className="flex items-center justify-end gap-2">
+              {authed ? (
+                <button
+                  onClick={() => {
+                    close();
+                    logout();
+                  }}
+                  className={buttonClass("outline", "sm", "text-danger")}
+                >
+                  <LogOut className="size-4" /> {t("nav.logout")}
+                </button>
+              ) : (
+                guestButtons
+              )}
+            </div>
           </div>
         </div>
       )}
     </>
+  );
+}
+
+function MobileUserCard({
+  fallbackName,
+  fallbackEmail,
+}: {
+  fallbackName: string;
+  fallbackEmail: string;
+}) {
+  const { data: me } = useQuery(meQueries.profile());
+  const name = me?.name ?? fallbackName;
+  return (
+    <div className="bg-surface border-line mb-3 flex items-center gap-3 rounded-2xl border p-3">
+      <Avatar name={name} size="lg" />
+      <div className="min-w-0">
+        <p className="text-ink truncate font-bold">{name}</p>
+        <p className="text-muted truncate text-xs">{me?.email ?? fallbackEmail}</p>
+      </div>
+    </div>
   );
 }
 

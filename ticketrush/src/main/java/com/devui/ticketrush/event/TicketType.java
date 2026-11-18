@@ -53,8 +53,8 @@ public class TicketType {
     }
 
     /**
-     * v1: simple "read, check, write". Safe for one user at a time only.
-     * With many users at the same moment this can oversell — that is the v2 problem.
+     * "Read, check, write" in Java. Only safe while this row is LOCKED (PESSIMISTIC strategy)
+     * or when one user at a time buys. Without a lock it oversells — see StockService (v2).
      */
     public void sell(int quantity) {
         if (quantity > getRemaining()) {

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- TicketRush tab icon: a tilted volt ticket with a violet "rush" bolt -->
+  <g transform="rotate(-12 32 32)">
+    <path d="M10 18h44a4 4 0 0 1 4 4v6a4 4 0 0 0 0 8v6a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4v-6a4 4 0 0 0 0-8v-6a4 4 0 0 1 4-4z" fill="#c9f23d" stroke="#16131d" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M40 22v20" stroke="#16131d" stroke-width="2.5" stroke-dasharray="3 3"/>
+    <path d="M27 20l-7 13h7l-3 11 11-15h-7l4-9z" fill="#5b3df5" stroke="#16131d" stroke-width="2" stroke-linejoin="round"/>
+  </g>
+</svg>

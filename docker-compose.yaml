@@ -17,5 +17,19 @@ services:
       timeout: 3s
       retries: 10
 
+  # Web page to look inside the database: http://localhost:8081
+  # Login → System: PostgreSQL · Server: postgres · Username/Password/Database: ticketrush
+  adminer:
+    image: adminer:5
+    container_name: ticketrush-adminer
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   ticketrush-pgdata:

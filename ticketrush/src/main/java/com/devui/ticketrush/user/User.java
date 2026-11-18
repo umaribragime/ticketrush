@@ -59,4 +59,13 @@ public class User {
     public boolean hasRole(Role role) {
         return roles.contains(role);
     }
+
+    public void rename(String name) {
+        this.name = name;
+    }
+
+    /** Takes an already-hashed password: the entity never sees the plain text. */
+    public void changePasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
 }

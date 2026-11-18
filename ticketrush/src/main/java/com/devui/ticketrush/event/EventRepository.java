@@ -23,6 +23,8 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
 
     Page<Event> findByOrganizerId(UUID organizerId, Pageable pageable);
 
+    long countByOrganizerId(UUID organizerId);
+
     /** Sales report: one row per ticket type, counted from the real tickets table (GROUP BY). */
     @Query("""
             select new com.devui.ticketrush.event.dto.TicketTypeSalesRow(

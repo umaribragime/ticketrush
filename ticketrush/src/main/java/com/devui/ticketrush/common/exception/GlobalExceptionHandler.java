@@ -1,6 +1,7 @@
 package com.devui.ticketrush.common.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -42,6 +43,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class})
     public ProblemDetail handleUnreadable(Exception ex) {
         return problem(ErrorCode.VALIDATION_FAILED, "Request body or parameter has a wrong format.");
+    }
+
+    /** Lock wait timeout or deadlock in the database → "busy, try again" instead of a 500. */
+    @ExceptionHandler(PessimisticLockingFailureException.class)
+    public ProblemDetail handleLockFailure(PessimisticLockingFailureException ex) {
+        log.warn("Lock failure: {}", ex.getMessage());
+        return problem(ErrorCode.STOCK_BUSY, ErrorCode.STOCK_BUSY.getMessage());
     }
 
     @ExceptionHandler(AccessDeniedException.class)

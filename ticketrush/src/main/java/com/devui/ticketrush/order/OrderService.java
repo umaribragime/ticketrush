@@ -9,6 +9,7 @@ import com.devui.ticketrush.event.TicketType;
 import com.devui.ticketrush.order.dto.OrderResponse;
 import com.devui.ticketrush.order.dto.OrderSummaryResponse;
 import com.devui.ticketrush.order.dto.PlaceOrderRequest;
+import com.devui.ticketrush.order.stock.StockService;
 import com.devui.ticketrush.ticket.Ticket;
 import com.devui.ticketrush.user.User;
 import com.devui.ticketrush.user.UserRepository;
@@ -34,6 +35,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
+    private final StockService stockService;
     private final Clock clock;
 
     @Value("${app.order.max-tickets-per-order:4}")
@@ -42,8 +44,8 @@ public class OrderService {
     /**
      * Buy tickets.
      * v1: no payment yet, so the order is PAID right away.
-     * v1: stock check is "read → check → write" with no lock. Under heavy load this
-     *     can sell more tickets than exist. Fixing this is v2.
+     * v2: stock is taken by StockService with a concurrency-safe strategy (default: one atomic UPDATE).
+     *     Everything runs in ONE transaction: if any step fails, the stock change is rolled back too.
      */
     @Transactional
     public OrderResponse placeOrder(UUID userId, PlaceOrderRequest request) {
@@ -66,12 +68,16 @@ public class OrderService {
                 .collect(Collectors.toMap(TicketType::getId, Function.identity()));
 
         Order order = new Order(user, event);
-        quantities.forEach((ticketTypeId, quantity) -> {
+        // Always take stock in the same order (sorted by id). If two buyers lock rows in
+        // different orders, each can wait for the other forever — a deadlock.
+        quantities.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(entry -> {
+            UUID ticketTypeId = entry.getKey();
+            int quantity = entry.getValue();
             TicketType type = typesById.get(ticketTypeId);
             if (type == null) {
                 throw new BusinessException(ErrorCode.TICKET_TYPE_NOT_FOUND);
             }
-            type.sell(quantity);
+            stockService.reserve(type, quantity);
             for (int i = 0; i < quantity; i++) {
                 order.addTicket(new Ticket(type));
             }

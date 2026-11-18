@@ -181,6 +181,64 @@
   .tl.done { border-color: color-mix(in oklab, var(--success) 50%, var(--line)); }
   .tl.next { border-color: var(--hot); background: var(--hot-soft); }
 
+  /* ---------- learning path ---------- */
+  .progress { display: flex; align-items: center; gap: 12px; margin: 20px 0 8px; }
+  .progress .bar { flex: 1; height: 10px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+  .progress .bar span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--hot)); transition: width .4s; }
+  .method { display: grid; gap: 10px; margin-top: 18px; }
+  @media (min-width: 760px) { .method { grid-template-columns: repeat(5, 1fr); } }
+  .method div { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; font-size: .86rem; }
+  .method b { display: block; font-size: .95rem; margin-bottom: 2px; }
+  .lessons { display: grid; gap: 10px; margin-top: 18px; }
+  .lesson { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; overflow: hidden; }
+  .lesson.done { border-color: color-mix(in oklab, var(--success) 55%, var(--line)); }
+  .lesson > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 44px 1fr auto; gap: 12px; align-items: center; padding: 14px 16px; }
+  .lesson > summary::-webkit-details-marker { display: none; }
+  .lesson .num { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; font-weight: 800; background: var(--accent-soft); color: var(--accent-ink); }
+  .lesson.done .num { background: var(--success); color: #fff; }
+  .lesson .t { font-weight: 800; font-size: 1.05rem; }
+  .lesson .meta { color: var(--muted); font-size: .8rem; }
+  .lesson .star { color: var(--hot); }
+  .lesson-body { padding: 0 16px 18px; display: grid; gap: 14px; }
+  @media (min-width: 900px) { .lesson-body { grid-template-columns: 1fr 1fr; } }
+  .lesson-body h4 { margin: 0 0 6px; font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .trace { list-style: none; margin: 0; padding: 0; counter-reset: tr; }
+  .trace li { counter-increment: tr; display: flex; gap: 8px; align-items: baseline; margin: 4px 0; font-size: .86rem; }
+  .trace li::before { content: counter(tr); flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--surface-2); font-size: .7rem; font-weight: 800; display: grid; place-items: center; }
+  .todo { margin: 0; padding-left: 18px; font-size: .9rem; }
+  .breakit { background: var(--hot-soft); border-radius: 14px; padding: 12px 14px; font-size: .9rem; }
+  .qa details { border-top: 1px solid var(--line); padding: 8px 0; }
+  .qa summary { cursor: pointer; font-weight: 700; font-size: .92rem; }
+  .qa p { color: var(--muted); font-size: .9rem; margin: 6px 0 0; }
+  .done-btn { justify-self: start; }
+
+  /* ---------- race lab ---------- */
+  .lab-head { display: grid; gap: 16px; }
+  @media (min-width: 900px) { .lab-head { grid-template-columns: 1.2fr 1fr; } }
+  .lab-head > * { min-width: 0; }
+  .lanes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr) minmax(0, 1fr); gap: 8px; }
+  .lanes .cell { overflow-wrap: anywhere; }
+  @media (max-width: 560px) { .lanes { gap: 4px; } .lanes .cell { padding: 8px; font-size: .74rem; } .lanes .cell.db { font-size: .7rem; } }
+  .lanes .h { font-size: .75rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); text-align: center; padding: 6px 0; }
+  .lane-row { display: contents; }
+  .cell { border-radius: 14px; padding: 10px 12px; font-size: .84rem; min-height: 54px; border: 1px dashed transparent; opacity: .35; transition: opacity .25s, transform .25s; }
+  .cell.on { opacity: 1; }
+  .cell.now { transform: scale(1.02); }
+  .cell.a { background: color-mix(in oklab, var(--accent) 14%, var(--surface)); }
+  .cell.b { background: color-mix(in oklab, var(--hot) 14%, var(--surface)); }
+  .cell.db { background: var(--surface); border-color: var(--line); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .78rem; }
+  .cell.empty { background: transparent; }
+  .cell.bad { outline: 2px solid var(--danger); }
+  .cell.good { outline: 2px solid var(--success); }
+  .verdict { margin-top: 14px; border-radius: 16px; padding: 14px 16px; font-weight: 700; display: none; }
+  .verdict.show { display: block; }
+  .verdict.bad { background: var(--danger-soft); color: var(--danger); }
+  .verdict.good { background: var(--success-soft); color: var(--success); }
+  .lab-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 14px 0; }
+  .sql { background: var(--surface-2); border-radius: 12px; padding: 12px; font-size: .8rem; overflow-x: auto; margin: 10px 0 0; white-space: pre; }
+  .pc { display: grid; gap: 8px; grid-template-columns: 1fr 1fr; margin-top: 10px; font-size: .86rem; }
+  .pc ul { margin: 4px 0 0; padding-left: 18px; }
+
   footer { padding: 48px 0 64px; color: var(--muted); font-size: .88rem; }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
 </style>
@@ -191,8 +249,10 @@
   <div class="wrap">
     <a class="logo" href="#top"><b>🎫</b><span>Ticket<em>Rush</em> Map</span></a>
     <nav class="toc" id="toc" aria-label="Sections">
+      <a href="#learn">★ Learn</a>
       <a href="#big-picture">Big picture</a>
       <a href="#flows">How it works</a>
+      <a href="#race-lab">★ Race lab</a>
       <a href="#journeys">User journeys</a>
       <a href="#layers">Layers</a>
       <a href="#folders">Folders</a>
@@ -220,10 +280,10 @@
       database and back.
     </p>
     <div class="grid g4 stats">
-      <div class="stat"><b>v1</b><span>current version</span></div>
-      <div class="stat"><b>13</b><span>API endpoints</span></div>
-      <div class="stat"><b>13</b><span>screens</span></div>
-      <div class="stat"><b>42</b><span>automated tests</span></div>
+      <div class="stat"><b>v2</b><span>current version</span></div>
+      <div class="stat"><b>16</b><span>API endpoints</span></div>
+      <div class="stat"><b>14</b><span>screens</span></div>
+      <div class="stat"><b>56</b><span>automated tests</span></div>
     </div>
     <div class="legend">
       <span class="pill p-fe">● Frontend (Next.js)</span>
@@ -232,6 +292,30 @@
       <span class="pill p-db">● Database (PostgreSQL)</span>
     </div>
   </div>
+
+
+  <!-- ================= LEARN ================= -->
+  <section id="learn">
+    <p class="kicker">★ Start here · learning path</p>
+    <h2>Learn the project in 11 lessons</h2>
+    <p class="lead">Don't read files one by one. Each lesson follows <b>one real action</b> through the code, in the order
+      it actually runs. Backend first (that's the job you want), frontend after. About one lesson a day.</p>
+
+    <div class="method">
+      <div><b>1 · Predict</b>Guess which files the action touches before you look.</div>
+      <div><b>2 · Trace</b>Put an IntelliJ breakpoint, run in Debug, step through.</div>
+      <div><b>3 · Break it</b>Change one thing on purpose, see what fails, undo.</div>
+      <div><b>4 · Explain</b>Say it back in your own words (to Claude or a rubber duck).</div>
+      <div><b>5 · Write</b>Add what you learned to <code>NOTES.md</code>.</div>
+    </div>
+
+    <div class="progress" aria-live="polite">
+      <div class="bar" aria-hidden="true"><span id="learnBar"></span></div>
+      <b id="learnCount" class="small">0 / 11 done</b>
+      <button class="btn ghost" id="learnReset" type="button">Reset</button>
+    </div>
+    <div class="lessons" id="lessons"></div>
+  </section>
 
   <!-- ================= BIG PICTURE ================= -->
   <section id="big-picture">
@@ -414,6 +498,50 @@
     </div>
   </section>
 
+
+  <!-- ================= RACE LAB ================= -->
+  <section id="race-lab">
+    <p class="kicker">★ Deep dive · v2 concurrency</p>
+    <h2>Race Lab: two fans, one last seat</h2>
+    <p class="lead">99 of 100 VIP seats are sold. <b>Buyer A</b> and <b>Buyer B</b> click "Buy" at the same moment.
+      Pick a strategy and press <b>Next</b> to watch, step by step, what each buyer and the database do.</p>
+
+    <div class="tabs" role="tablist" id="labTabs"></div>
+
+    <div class="lab-head">
+      <div class="card">
+        <div class="lanes" id="lanes">
+          <div class="h" style="color:var(--accent-ink)">Buyer A</div>
+          <div class="h">Database row (VIP)</div>
+          <div class="h" style="color:var(--hot)">Buyer B</div>
+        </div>
+        <div class="lab-controls">
+          <button class="btn ghost" id="labReset" type="button">↺ Restart</button>
+          <button class="btn" id="labNext" type="button">Next step →</button>
+          <button class="btn ghost" id="labPlay" type="button">▶ Play all</button>
+          <span class="muted small" id="labCount"></span>
+        </div>
+        <div class="verdict" id="labVerdict" role="status"></div>
+      </div>
+      <div class="card" id="labInfo"></div>
+    </div>
+
+    <h3 style="margin-top:28px">Measured on real PostgreSQL (1,000 buyers, 100 seats)</h3>
+    <p class="muted small">From the automated race tests (<code>concurrency/*RaceTest</code>, Testcontainers). Your times will differ a little.</p>
+    <div class="card table-card" style="margin-top:10px">
+      <table>
+        <thead><tr><th>Strategy</th><th>Successful orders</th><th>"Sold out"</th><th>sold column</th><th>Ticket rows</th><th>Time</th><th>Result</th></tr></thead>
+        <tbody id="raceTable"></tbody>
+      </table>
+    </div>
+    <div class="grid g2" style="margin-top:16px">
+      <div class="tip"><b>Run it yourself:</b> <code>./mvnw test</code> runs the 3 safe strategies (they must never oversell).
+        <code>./mvnw test -Ddemo</code> runs the broken v1 version on purpose. Results: <code>ticketrush/target/race-results.md</code>.</div>
+      <div class="tip"><b>Switch the app's strategy:</b> set <code>STOCK_STRATEGY=PESSIMISTIC</code> (or OPTIMISTIC / ATOMIC) before
+        starting the backend. The code is in <code>order/stock/StockService.java</code>.</div>
+    </div>
+  </section>
+
   <!-- ================= JOURNEYS ================= -->
   <section id="journeys">
     <p class="kicker">3 · User journeys</p>
@@ -494,7 +622,7 @@
   <!-- ================= API ================= -->
   <section id="api">
     <p class="kicker">7 · Backend API</p>
-    <h2>All 13 endpoints</h2>
+    <h2>All 16 endpoints</h2>
     <p class="lead">An <b>endpoint</b> is a URL the backend answers. Try them yourself in Swagger:
       <a href="http://localhost:8080/swagger-ui.html">localhost:8080/swagger-ui.html</a> (backend must be running).</p>
     <div class="card table-card" style="margin-top:16px">
@@ -549,7 +677,7 @@
         <!-- ticket_types -->
         <g class="tbl"><rect class="b" x="390" y="290" width="220" height="130" rx="12"/><rect class="h" x="390" y="290" width="220" height="30" rx="12"/><rect class="h" x="390" y="305" width="220" height="15"/>
           <text class="h" x="405" y="310">ticket_types</text>
-          <text class="k" x="405" y="340">id (PK) · event_id (FK)</text><text class="c" x="405" y="358">name ("VIP", "R")</text><text class="c" x="405" y="376">price (NUMERIC, never double)</text><text class="c" x="405" y="394">total_available · sold</text><text class="c" x="405" y="410" style="fill:var(--hot);font-weight:700">↑ v2 concurrency target</text></g>
+          <text class="k" x="405" y="340">id (PK) · event_id (FK)</text><text class="c" x="405" y="358">name ("VIP", "R")</text><text class="c" x="405" y="376">price (NUMERIC, never double)</text><text class="c" x="405" y="394">total_available · sold · version</text><text class="c" x="405" y="410" style="fill:var(--success);font-weight:700">✓ v2: CHECK 0 ≤ sold ≤ total</text></g>
         <!-- ticket_validations -->
         <g class="tbl"><rect class="b" x="390" y="480" width="220" height="140" rx="12"/><rect class="h" x="390" y="480" width="220" height="30" rx="12"/><rect class="h" x="390" y="495" width="220" height="15"/>
           <text class="h" x="405" y="500">ticket_validations</text>
@@ -596,7 +724,7 @@
       <div class="card"><span class="pill p-db">1 · Database</span>
         <pre class="mono small" style="margin:12px 0 0;white-space:pre-wrap">cd ticket-rush
 docker compose up -d</pre>
-        <p class="muted small">PostgreSQL 17 on port 5434. Docker Desktop must be open.</p></div>
+        <p class="muted small">PostgreSQL 17 on port 5434 + Adminer on 8081. Docker Desktop must be open.</p></div>
       <div class="card"><span class="pill p-be">2 · Backend</span>
         <pre class="mono small" style="margin:12px 0 0;white-space:pre-wrap">cd ticketrush
 ./mvnw spring-boot:run</pre>
@@ -609,11 +737,21 @@ npm run dev</pre>
     </div>
     <div class="grid g2" style="margin-top:16px">
       <div class="card"><h3>Tests</h3>
-        <p class="small"><b>Backend — 21 integration tests</b> (<code>./mvnw test</code>): they start the real app with
+        <p class="small"><b>Backend — 31 tests</b> (+1 demo) (<code>./mvnw test</code>): they start the real app with
           real security and a real database (H2 in PostgreSQL mode) and call the API like a client. Files: <code>AuthFlowTest</code>,
-          <code>EventFlowTest</code>, <code>OrderFlowTest</code>, <code>CheckInFlowTest</code>.</p>
-        <p class="small"><b>Frontend — 21 tests</b> (<code>npm test</code>, Vitest): cart rules, date/price formatting,
+          <code>EventFlowTest</code>, <code>OrderFlowTest</code>, <code>CheckInFlowTest</code>, <code>AccountFlowTest</code> on H2, plus 3 <b>race tests on real PostgreSQL</b> (Testcontainers, Docker must be running).</p>
+        <p class="small"><b>Frontend — 25 tests</b> (<code>npm test</code>, Vitest): cart rules, date/price formatting,
           form validation, the login form (EN + KO), and "Korean has exactly the same keys as English".</p></div>
+      <div class="card"><h3>Look inside the database (Adminer)</h3>
+        <p class="small">Open <a href="http://localhost:8081">localhost:8081</a> and log in with:</p>
+        <table><tbody>
+          <tr><td>System</td><td><b>PostgreSQL</b> (not MySQL!)</td></tr>
+          <tr><td>Server</td><td><code>postgres</code></td></tr>
+          <tr><td>Username · Password · Database</td><td><code>ticketrush</code> (all three)</td></tr>
+        </tbody></table>
+        <p class="small muted" style="margin-top:8px">Good tables to look at: <code>ticket_validations</code> (every gate scan),
+          <code>orders</code>, <code>tickets</code>, <code>ticket_types</code> (watch <code>sold</code> go up),
+          <code>flyway_schema_history</code> (which migrations ran).</p></div>
       <div class="card"><h3>Demo accounts</h3>
         <p class="small">Password for all: <code>password123</code></p>
         <table><tbody>
@@ -638,16 +776,16 @@ npm run dev</pre>
     <h2>Where we are on the roadmap</h2>
     <p class="lead">Each version solves one real problem and ends with proof (a test or a number). Details in <code>ROADMAP.md</code>.</p>
     <div class="timeline" id="timeline" style="margin-top:20px"></div>
-    <div class="note"><b>⚠ Known weak point (on purpose, fixed in v2):</b> <code>TicketType.sell()</code> does
-      "read → check → write" with no lock. If 1,000 people click "Buy" at the same moment, two of them can both see
-      "1 left" and both buy it → <b>overselling</b>. v2 will prove this with a test, then fix it.</div>
+    <div class="tip"><b>✓ v2 solved overselling.</b> v1 sold <b>1,000 tickets for 100 seats</b> in the race test.
+      v2 takes stock with an atomic SQL update (plus pessimistic and optimistic options), proven by race tests on real
+      PostgreSQL. See the <a href="#race-lab">Race Lab</a>.</div>
   </section>
 
 </main>
 
 <footer>
   <div class="wrap">
-    TicketRush Map · v1 · 2026-11-18 · Open this file in any browser, no internet needed.<br/>
+    TicketRush Map · v2 · 2026-11-18 · Open this file in any browser, no internet needed.<br/>
     <b>Updating:</b> after each version, update the <code>DATA</code> section at the bottom of this file
     (steps, tree, pages, API, versions) and the stats at the top.
   </div>
@@ -684,10 +822,10 @@ const FLOWS = {
       { at: "s-security", layer: "be", title: "Is the token real?", text: "Spring's OAuth2 Resource Server checks the JWT signature (HS256), expiry and issuer. Bad token → 401. The user id comes from the token's \"sub\" field.", files: ["ticketrush/…/auth/SecurityConfig.java", "ticketrush/…/auth/CurrentUser.java"] },
       { at: "s-controller", layer: "be", title: "OrderController checks the JSON", text: "@Valid PlaceOrderRequest: eventId must exist in the body, quantity 1–10, at least one item. Bad input → 400 with field errors.", files: ["ticketrush/…/order/OrderController.java", "ticketrush/…/order/dto/PlaceOrderRequest.java"] },
       { at: "s-service", layer: "be", title: "OrderService.placeOrder() — the rules", text: "Starts a transaction. Merges duplicate items, checks max 4 tickets, loads the event with its ticket types in one query (@EntityGraph), and checks the sales window (isOnSale).", files: ["ticketrush/…/order/OrderService.java"] },
-      { at: "s-entity", layer: "be", title: "TicketType.sell(2)", text: "Checks remaining stock and adds to \"sold\". Not enough → TICKET_SOLD_OUT (409). ⚠ This is the v2 problem: no lock yet, so two buyers at the same moment can both pass the check.", files: ["ticketrush/…/event/TicketType.java"] },
+      { at: "s-service", layer: "be", title: "StockService.reserve() — safe under a rush (v2)", text: "Ticket types are sorted (no deadlocks), then each one is taken with ONE atomic SQL update that checks and writes together. 0 rows changed → TICKET_SOLD_OUT (409). Try the other strategies in the Race Lab.", files: ["ticketrush/…/order/stock/StockService.java", "ticketrush/…/order/stock/StockRepository.java"], code: "UPDATE ticket_types\n   SET sold = sold + 2, version = version + 1\n WHERE id = ? AND sold + 2 <= total_available;\n-- 1 row → reserved · 0 rows → sold out" },
       { at: "s-entity", layer: "be", title: "Order + Tickets + QR codes are built", text: "new Order(user, event). For each ticket: new Ticket(type) copies the price and creates a QrCode with a random token. The order becomes PAID (no payment yet in v1).", files: ["ticketrush/…/order/Order.java", "ticketrush/…/ticket/Ticket.java", "ticketrush/…/ticket/QrCode.java"] },
       { at: "s-repo", layer: "be", title: "orderRepository.saveAndFlush()", text: "Cascade saves the order, its tickets and their QR codes in one go.", files: ["ticketrush/…/order/OrderRepository.java"] },
-      { at: "db", layer: "db", title: "One transaction in PostgreSQL", text: "UPDATE ticket_types (sold), INSERT orders, tickets, qr_codes — all succeed together, or all are rolled back.", code: "BEGIN;\nUPDATE ticket_types SET sold = 2 …;\nINSERT INTO orders …; INSERT INTO tickets …; INSERT INTO qr_codes …;\nCOMMIT;" },
+      { at: "db", layer: "db", title: "One transaction in PostgreSQL", text: "The atomic UPDATE, then INSERT orders, tickets, qr_codes — all succeed together, or all are rolled back (stock included).", code: "BEGIN;\nUPDATE ticket_types SET sold = sold + 2 WHERE … ;\nINSERT INTO orders …; INSERT INTO tickets …; INSERT INTO qr_codes …;\nCOMMIT;" },
       { at: "s-controller", layer: "be", title: "201 Created + JSON comes back", text: "OrderResponse with the tickets and QR values. If anything failed, GlobalExceptionHandler returns a Problem Details error with a stable code.", files: ["ticketrush/…/common/exception/GlobalExceptionHandler.java"] },
       { at: "n-client", layer: "fe", title: "\"You're in!\"", text: "onSuccess: old \"my tickets\" data is marked stale (invalidateQueries) and you go to /my/orders/{id}?new=1. Errors are shown in your language via errorMessage().", files: ["frontend/src/app/my/orders/[orderId]/order-detail-view.tsx", "frontend/src/shared/api/errors.ts"] },
     ],
@@ -714,6 +852,7 @@ const JOURNEYS = {
     ["Buy up to 4 tickets", "/events/{id}", "POST /orders", "Order PAID + tickets + QR codes. Stock goes down."],
     ["See the result", "/my/orders/{id}", "GET /orders/{id}", "\"You're in!\" + ticket cards."],
     ["Show the QR at the gate", "/my/tickets", "GET /tickets, GET /tickets/{id}/qr", "PNG made by ZXing on the backend. After the scan the ticket shows \"Checked in\"."],
+    ["Manage my account", "/account (avatar menu → Account)", "GET/PATCH /users/me, PUT /users/me/password, GET /users/me/summary", "Change name (menu updates instantly) or password (current one required). See counts of tickets and orders."],
   ]},
   organizer: { label: "📣 Organizer", steps: [
     ["Sign up as \"Organize\"", "/signup", "POST /auth/signup", "Roles ATTENDEE + ORGANIZER. Lands on /organizer."],
@@ -740,10 +879,11 @@ const TREE = [
     { n: "NOTES.md", d: "What was learned in each version + \"to study\" lists" },
     { n: "docker-compose.yaml", d: "Starts PostgreSQL 17 on port 5434 (data kept in a Docker volume)" },
     { n: "ticketrush/", d: "BACKEND — Spring Boot 4.1, Java 21, Maven", c: [
-      { n: "pom.xml", d: "Dependencies: web, JPA, security + OAuth2 resource server, validation, Flyway, actuator, springdoc, ZXing" },
+      { n: "pom.xml", d: "Dependencies (web, JPA, security, Flyway, springdoc, ZXing, Testcontainers) + the -Ddemo test profile" },
       { n: "src/main/resources/", d: "Settings and SQL", c: [
         { n: "application.yml", d: "DB connection, JWT secret/expiry (2h), max 4 tickets per order, Swagger path" },
         { n: "db/migration/V1__init_schema.sql", d: "The real schema: 9 tables, keys, indexes, CHECK rules. Flyway runs it once." },
+        { n: "db/migration/V2__stock_safety.sql", d: "v2: version column + CHECK (0 ≤ sold ≤ total_available)" },
       ]},
       { n: "src/main/java/com/devui/ticketrush/", d: "Java code, grouped by feature", c: [
         { n: "TicketrushApplication.java", d: "main() — starts Spring" },
@@ -760,7 +900,9 @@ const TREE = [
           { n: "User.java", d: "Entity: name, email, password hash, Set<Role>" },
           { n: "Role.java", d: "ATTENDEE, ORGANIZER, STAFF" },
           { n: "UserRepository.java", d: "findByEmail, existsByEmail" },
-          { n: "UserController.java", d: "GET /api/v1/users/me" },
+          { n: "UserController.java", d: "/api/v1/users/me — read, rename, change password, summary" },
+          { n: "UserService.java", d: "My-account logic: rename, password change (checks current), counts" },
+          { n: "dto/", d: "UserResponse, UpdateProfileRequest, ChangePasswordRequest, UserSummaryResponse" },
         ]},
         { n: "event/", d: "Events, ticket types, sales report", c: [
           { n: "Event.java", d: "Entity + rules: publish(), cancel(), update() only in DRAFT, isOnSale(now), schedule check" },
@@ -773,7 +915,12 @@ const TREE = [
         ]},
         { n: "order/", d: "Buying tickets", c: [
           { n: "Order.java", d: "Entity: user, event, totalAmount, status, tickets" },
-          { n: "OrderService.java", d: "placeOrder(): limit 4, sales window, stock, build tickets, PAID" },
+          { n: "OrderService.java", d: "placeOrder(): limit 4, sales window, stock (via StockService), build tickets, PAID" },
+          { n: "stock/", d: "v2 — taking stock safely under concurrency", c: [
+            { n: "StockService.java", d: "reserve(): NAIVE (demo) · PESSIMISTIC (FOR UPDATE) · OPTIMISTIC (CAS + retry) · ATOMIC (default)" },
+            { n: "StockRepository.java", d: "The native SQL for each strategy — read it, it's short" },
+            { n: "StockStrategy.java", d: "The 4 strategies; pick one with app.order.stock-strategy / STOCK_STRATEGY" },
+          ]},
           { n: "OrderController.java", d: "POST /orders, GET /orders, GET /orders/{id}" },
           { n: "OrderRepository.java", d: "findByUserId (paged), findDetailedById" },
           { n: "OrderStatus.java", d: "PENDING, PAID, CANCELLED, EXPIRED" },
@@ -802,10 +949,14 @@ const TREE = [
       ]},
       { n: "src/test/", d: "21 integration tests", c: [
         { n: "support/IntegrationTest.java", d: "Base class: full Spring app + MockMvc + helpers (signup, createEvent, placeOrder)" },
+        { n: "support/PostgresIntegrationTest.java", d: "Same, but on a real PostgreSQL 17 in Docker (Testcontainers)" },
+        { n: "support/TicketRace.java", d: "Fires many buy attempts at once (CountDownLatch start gate) and counts the result" },
+        { n: "concurrency/", d: "Race tests: Atomic / Pessimistic / Optimistic must never oversell · NaiveOversellDemoTest (-Ddemo)" },
         { n: "flows/AuthFlowTest.java", d: "Signup, login, duplicate email, wrong password, validation errors, 401" },
         { n: "flows/EventFlowTest.java", d: "Roles, drafts private, publish, edit rules, bad schedule" },
         { n: "flows/OrderFlowTest.java", d: "Buy, sold out, limit 4, not on sale yet, QR image, sales report" },
         { n: "flows/CheckInFlowTest.java", d: "Valid once, ALREADY_USED, NOT_FOUND, WRONG_EVENT, non-staff 403" },
+        { n: "flows/AccountFlowTest.java", d: "Rename, password change, wrong/same password, summary counts, login required" },
         { n: "resources/application-test.yml", d: "H2 in-memory database in PostgreSQL mode" },
       ]},
     ]},
@@ -822,7 +973,9 @@ const TREE = [
         { n: "page.tsx", d: "/ — home (Server Component fetches events)" },
         { n: "home-hero.tsx · event-grid.tsx · event-search.tsx", d: "Hero + ticker, event grid, search box" },
         { n: "events/[eventId]/", d: "/events/{id} — event detail (server fetch) + buy panel" },
-        { n: "login/ · signup/", d: "Auth pages" },
+        { n: "login/ · signup/", d: "Auth pages (logged-in users are sent home)" },
+        { n: "account/", d: "/account — My account page (login required)" },
+        { n: "icon.svg", d: "The tab icon (volt ticket + bolt)" },
         { n: "my/", d: "/my/tickets, /my/orders, /my/orders/{id} (login required)" },
         { n: "organizer/", d: "/organizer… — list, new, manage + sales dashboard + staff, edit" },
         { n: "check-in/", d: "/check-in and /check-in/{eventId} gate screen" },
@@ -830,7 +983,8 @@ const TREE = [
       ]},
       { n: "src/widgets/", d: "Big shared blocks", c: [
         { n: "site-header.tsx", d: "Logo, menu by role, EN|KO, Light|Dark|System, mobile menu" },
-        { n: "site-footer.tsx", d: "Footer" },
+        { n: "user-menu.tsx", d: "Avatar dropdown: tickets, orders, manage, check-in, account, log out" },
+        { n: "site-footer.tsx", d: "Footer: link columns, © line, KST note" },
       ]},
       { n: "src/features/", d: "USER ACTIONS", c: [
         { n: "auth/", d: "Login/signup forms + Zod rules, AuthGuard (login/role check), split auth layout" },
@@ -838,12 +992,14 @@ const TREE = [
         { n: "ticket/ticket-card.tsx", d: "Mobile-ticket card with QR" },
         { n: "event-form/", d: "Create/edit form: React Hook Form + useFieldArray + Zod (same rules as backend)" },
         { n: "check-in/", d: "Gate scanner screen + API call" },
+        { n: "account/", d: "Account page, profile form, password form (+ Zod rules, tested)" },
       ]},
       { n: "src/entities/", d: "BUSINESS OBJECTS", c: [
         { n: "event/api.ts", d: "Organizer API calls + query key factory" },
         { n: "event/ui.tsx", d: "EventCard (ticket stub), Poster (generated art), status badges" },
         { n: "ticket/api.ts", d: "My tickets/orders queries, QR loading, place order" },
         { n: "ticket/ui.tsx", d: "Ticket and order status badges" },
+        { n: "user/api.ts", d: "/users/me queries (profile, summary) + rename / change password" },
       ]},
       { n: "src/shared/", d: "NO BUSINESS MEANING", c: [
         { n: "api/http.ts", d: "axios: base /api/v1, adds JWT, logs out on 401" },
@@ -855,7 +1011,7 @@ const TREE = [
         { n: "session/", d: "Login token store (Zustand + localStorage), auto-logout when it expires" },
         { n: "prefs/", d: "Language + theme store, the no-flash script" },
         { n: "lib/", d: "format.ts (KST dates, ₩/원, poster colors), use-now (countdown), use-mounted" },
-        { n: "ui/", d: "Button, Field/Input, Card, Badge, Pager, Spinner, Logo, EN|KO + theme switches" },
+        { n: "ui/", d: "Button, Field/Input, Card, Badge, Pager, Spinner, Logo, Avatar, EN|KO + theme switches" },
       ]},
     ]},
   ]},
@@ -866,6 +1022,7 @@ const PAGES = [
   ["/events/{id}", "Anyone", "Poster, details, ticket picker, countdown", "server", "app/events/[eventId]/page.tsx"],
   ["/login", "Anyone", "Log in", "—", "features/auth/login-form.tsx"],
   ["/signup", "Anyone", "Sign up as attendee or organizer", "—", "features/auth/signup-form.tsx"],
+  ["/account", "Logged in", "Profile, stats, change name & password, preferences, log out", "client", "features/account/account-view.tsx"],
   ["/my/tickets", "Logged in", "Mobile tickets with QR", "client", "app/my/tickets/my-tickets-view.tsx"],
   ["/my/orders", "Logged in", "Order history", "client", "app/my/orders/my-orders-view.tsx"],
   ["/my/orders/{id}", "Owner", "\"You're in!\" + the order's tickets", "client", "app/my/orders/[orderId]/order-detail-view.tsx"],
@@ -880,7 +1037,9 @@ const PAGES = [
 const API = [
   ["POST", "/api/v1/auth/signup", "Anyone", "Create an account", "AuthController"],
   ["POST", "/api/v1/auth/login", "Anyone", "Get a JWT (2 hours)", "AuthController"],
-  ["GET", "/api/v1/users/me", "Logged in", "My profile + roles", "UserController"],
+  ["GET · PATCH", "/api/v1/users/me", "Logged in", "My profile · change my name", "UserController"],
+  ["PUT", "/api/v1/users/me/password", "Logged in", "Change password (needs the current one)", "UserController"],
+  ["GET", "/api/v1/users/me/summary", "Logged in", "My ticket / order / event counts", "UserController"],
   ["GET", "/api/v1/events?q=&page=&size=", "Anyone", "Published events (paged, search)", "EventController"],
   ["GET", "/api/v1/events/{id}", "Anyone", "One event + ticket types + stock", "EventController"],
   ["POST · GET", "/api/v1/organizer/events", "Organizer", "Create (draft) · list mine", "OrganizerEventController"],
@@ -906,7 +1065,14 @@ const WORDS = [
   ["N+1 problem", "Loading a list, then running 1 extra query per item. Fixed here with @EntityGraph (load related data in one query)."],
   ["Flyway / migration", "Versioned SQL files that build the database. V1__init_schema.sql runs once; V2 will add changes later."],
   ["Problem Details (RFC 9457)", "A standard JSON shape for errors: status, title, detail, + our code (e.g. TICKET_SOLD_OUT)."],
-  ["Concurrency / race condition", "Many requests touching the same data at the same moment. Without care, two buyers can take the last seat → overselling. That's v2."],
+  ["Concurrency / race condition", "Many requests touching the same data at the same moment. The result depends on who is faster — two buyers can both take the last seat."],
+  ["Lost update", "Two transactions read the same value (99), both write their result (100). One write silently erases the other. That's how v1 sold 1,000 tickets while \"sold\" said 30."],
+  ["Pessimistic lock", "\"Assume conflict\": lock the row first (SELECT … FOR UPDATE), others wait in line. Simple and safe; slow if many wait for the same row."],
+  ["Optimistic lock / CAS", "\"Assume no conflict\": read with a version number, write only if the version didn't change (compare-and-set), else retry. Great when conflicts are rare."],
+  ["Atomic update", "One SQL statement that checks and writes together: UPDATE … SET sold = sold + 1 WHERE sold + 1 <= total. The database makes it safe. Our default."],
+  ["Deadlock", "A waits for B's lock while B waits for A's. We avoid it by always locking ticket types in the same order (sorted by id)."],
+  ["Testcontainers", "Starts real services (here PostgreSQL 17) in Docker for a test, then throws them away. Concurrency must be tested on the real database."],
+  ["CountDownLatch", "A Java \"start gate\": all buyer threads wait at it, then one countDown() releases them at the same instant."],
   ["Next.js", "A React framework. Folders in app/ become URLs. Can build HTML on the server."],
   ["Server Component", "A React component that runs only on the server. Can fetch data directly; sends ready HTML."],
   ["Client Component", "A component that runs in the browser (\"use client\"). Needed for clicks, forms and state."],
@@ -922,9 +1088,9 @@ const WORDS = [
 ];
 
 const VERSIONS = [
-  ["v1", "Core app + frontend (EN/KO, dark mode)", "done"],
-  ["v2", "Overselling under concurrency (locks, atomic update)", "next"],
-  ["v3", "Docker images + Testcontainers + GitHub Actions CI", "todo"],
+  ["v1", "Core app + frontend (EN/KO, dark mode, accounts)", "done"],
+  ["v2", "Overselling fixed: atomic update + pessimistic + optimistic, proven by race tests", "done"],
+  ["v3", "Docker images + GitHub Actions CI (Testcontainers already started in v2)", "next"],
   ["v4", "Redis cache + waiting queue (대기열)", "todo"],
   ["v5", "5-minute hold + payment (Toss sandbox) + idempotency", "todo"],
   ["v6", "Kafka + outbox (async jobs)", "todo"],
@@ -932,6 +1098,176 @@ const VERSIONS = [
   ["v8", "Seat selection (Venue → Section → Seat)", "todo"],
   ["v9", "Spring AI event assistant", "todo"],
   ["v10", "Deploy to AWS (live URL)", "todo"],
+];
+
+/* ---------- learning path (update when the code changes) ---------- */
+const LESSONS = [
+  { id: "run", title: "Run & explore", time: "30 min", star: false,
+    goal: "See the 3 programs work together before reading any code.",
+    trace: ["docker compose up -d (PostgreSQL + Adminer)", "Run TicketrushApplication in IntelliJ", "cd frontend && npm run dev → localhost:3000", "Swagger: localhost:8080/swagger-ui.html", "Adminer: localhost:8081"],
+    todo: ["Sign up, buy a ticket, open its QR.", "In Adminer, find your order in orders, your tickets in tickets, and watch ticket_types.sold go up.", "In Swagger, call GET /api/v1/events. Compare the JSON with the home page."],
+    breakIt: "Stop the backend and reload the home page. What does the page show, and which file decides that message? (hint: server-api.ts, event-grid.tsx)",
+    qa: [
+      ["What are the three programs and what does each do?", "Next.js frontend = what users see. Spring Boot backend = rules + API. PostgreSQL = stores data. They talk over HTTP with JSON (frontend ↔ backend) and SQL (backend ↔ database)."],
+      ["Why does the browser call /api on port 3000, not 8080?", "next.config.ts rewrites /api/* to Spring. To the browser it's one address (same origin), so there's no CORS problem and Spring stays hidden."],
+    ] },
+  { id: "auth", title: "Sign up & log in (JWT)", time: "60–90 min", star: true,
+    goal: "Understand how the app knows who you are on every request.",
+    trace: ["frontend: features/auth/login-form.tsx", "shared/api/http.ts (adds the token)", "auth/AuthController.java", "auth/AuthService.java (BCrypt check)", "auth/TokenService.java (builds the JWT)", "auth/SecurityConfig.java (checks it on every request)", "auth/CurrentUser.java (user id from \"sub\")"],
+    todo: ["Breakpoint in AuthService.login and TokenService.issue, then log in.", "Copy your token from localStorage (key ticketrush-session) and decode the middle part with base64 to see the claims. (Never paste real production tokens into websites.)", "Find where roles turn into ROLE_ORGANIZER."],
+    breakIt: "In application.yml set JWT_EXPIRATION to PT1M (1 minute). Log in, wait a minute — what happens in the UI, and which code does it? (session-store.ts scheduleExpiry + http.ts 401)",
+    qa: [
+      ["Why hash passwords with BCrypt instead of encrypting them?", "Encryption can be reversed with a key; a hash can't. Even if the database leaks, attackers don't get passwords. BCrypt is also slow on purpose and salted, so guessing is expensive."],
+      ["Why the same error for 'no such email' and 'wrong password'?", "Different messages would tell an attacker which emails are registered (user enumeration)."],
+      ["JWT vs server session: trade-offs?", "JWT: stateless, any server can check it, easy to scale; but hard to revoke before it expires. Session: easy to revoke, but the server must store it (shared store when you scale)."],
+    ] },
+  { id: "db", title: "The database & JPA", time: "60 min", star: false,
+    goal: "Connect the tables, the SQL migrations and the Java entities.",
+    trace: ["db/migration/V1__init_schema.sql", "db/migration/V2__stock_safety.sql", "event/Event.java · event/TicketType.java", "order/Order.java · ticket/Ticket.java", "event/EventRepository.java (@EntityGraph, the GROUP BY query)"],
+    todo: ["Draw the 9 tables and their arrows from memory, then compare with the Data model section.", "In Adminer open flyway_schema_history: which migrations ran?", "Find every @ManyToOne and say which column it uses."],
+    breakIt: "Rename a column only in Java: @Column(name = \"venue2\") in Event.java. Start the app. Why does it refuse to start — and why is that GOOD? (ddl-auto: validate)",
+    qa: [
+      ["Why Flyway migrations instead of ddl-auto: update?", "Migrations are versioned, reviewed SQL — the same on every machine and in production. 'update' guesses changes, can't rename or migrate data, and may do surprising things."],
+      ["Why BigDecimal for money?", "double can't store 0.1 exactly (0.1 + 0.2 = 0.30000000000000004). Money must be exact."],
+      ["What is the N+1 problem? How is it avoided here?", "Loading N rows, then 1 extra query per row for related data. @EntityGraph loads the related data in the same query (e.g. event + its ticket types)."],
+    ] },
+  { id: "event", title: "Create & publish an event", time: "60 min", star: false,
+    goal: "See layers, roles and business rules in one flow.",
+    trace: ["event/OrganizerEventController.java (@PreAuthorize)", "event/EventService.java", "event/Event.java (constructor → changeDetails, publish())", "common/exception/ErrorCode.java"],
+    todo: ["Create an event in the UI with a breakpoint in Event.publish().", "Find the date rule (sales start < sales end ≤ show start < show end) in Java AND in the frontend Zod schema."],
+    breakIt: "Log in as an attendee and call POST /api/v1/organizer/events in Swagger. Which line returns 403 — and why is it not 401?",
+    qa: [
+      ["Why put rules like publish() inside the entity instead of the service?", "The rule lives next to the data it protects, so no caller can skip it. Services coordinate; entities keep themselves valid ('rich domain model')."],
+      ["401 vs 403?", "401 = we don't know who you are (no/invalid token). 403 = we know you, but you're not allowed."],
+    ] },
+  { id: "buy", title: "Buy a ticket (transactions)", time: "90 min", star: true,
+    goal: "Follow the most important flow end to end and understand @Transactional.",
+    trace: ["frontend: features/order/buy-panel.tsx · cart.ts", "entities/ticket/api.ts → shared/api/http.ts", "order/OrderController.java", "order/OrderService.placeOrder()", "order/stock/StockService.reserve()", "order/Order.java · ticket/Ticket.java · ticket/QrCode.java", "OrderRepository.saveAndFlush()"],
+    todo: ["Follow 'Buy 2 tickets' in the How it works section, then do it for real with breakpoints.", "Find where the price is copied into the ticket and why."],
+    breakIt: "Right after stockService.reserve(...) add: if (true) throw new RuntimeException(\"boom\"); Buy a ticket. Check ticket_types.sold in Adminer — did it change? (No: the whole transaction rolled back.) Then remove the line.",
+    qa: [
+      ["If saving the order fails after stock was taken, what happens to the stock?", "Everything runs in one @Transactional method, so the database rolls back the stock update too. All or nothing."],
+      ["Why are ticket types sorted before reserving?", "If two orders lock rows in different orders, each can wait for the other forever (deadlock). Same order for everyone = no cycle."],
+      ["Why copy the price into the ticket?", "Organizers may change prices later; old orders must keep what the fan actually paid."],
+    ] },
+  { id: "race", title: "Concurrency — the v2 deep dive", time: "90–120 min", star: true,
+    goal: "Understand the race condition that sold 1,000 tickets for 100 seats, and the 3 ways to fix it.",
+    trace: ["Race Lab section on this page (all 4 strategies)", "order/stock/StockService.java", "order/stock/StockRepository.java (the SQL)", "db/migration/V2__stock_safety.sql", "test: support/TicketRace.java", "test: concurrency/*RaceTest.java"],
+    todo: ["Play all 4 strategies in the Race Lab and explain each to yourself.", "Run ./mvnw test -Ddemo and read target/race-results.md.", "Explain why the v1 'sold' column said 30 while 1,000 tickets existed."],
+    breakIt: "Start the backend with STOCK_STRATEGY=NAIVE, open two browser windows and try to buy the last ticket at the same moment. Then switch back to ATOMIC.",
+    qa: [
+      ["What is a lost update?", "Two transactions read the same value and both write a result based on it; the second write erases the first. v1: both read sold = 99, both wrote 100."],
+      ["Pessimistic vs optimistic locking — when would you choose each?", "Pessimistic when conflicts are likely (hot rows, like the last seats): simple and safe, but others wait. Optimistic when conflicts are rare: no waiting, but conflicts mean retries (and can fail under a big rush)."],
+      ["Why doesn't the CHECK constraint (sold ≤ total) alone stop overselling?", "In a lost update the counter goes DOWN in reality (both write 100), so it never breaks the CHECK — the extra tickets still get created. Constraints are a safety net, not the fix."],
+      ["Why test on PostgreSQL instead of H2?", "Concurrency depends on the database's locking and isolation. H2 behaves differently, so a race test could pass on H2 and fail in production."],
+      ["What if 100,000 people come at once?", "The row lock becomes the bottleneck. Put a waiting queue in front (Redis, v4) to let in only as many buyers as the system can handle, and/or keep stock counters in Redis."],
+    ] },
+  { id: "tests", title: "Tests", time: "60 min", star: false,
+    goal: "Read the tests as documentation, then write one yourself.",
+    trace: ["test: support/IntegrationTest.java (helpers)", "test: flows/OrderFlowTest.java", "test: flows/AccountFlowTest.java", "test: concurrency/AtomicStockRaceTest.java"],
+    todo: ["Run ./mvnw test and read the output.", "Write a new test: ordering 0 tickets returns 400 VALIDATION_FAILED. Make it fail first, then pass."],
+    breakIt: "In TicketType.sell change > to >=. Which tests fail, and do their names tell you what broke?",
+    qa: [
+      ["Unit test vs integration test?", "A unit test checks one class alone (fast). An integration test runs real pieces together — here the whole Spring app with security and a database."],
+      ["What does MockMvc do?", "It sends fake HTTP requests through the real Spring MVC stack (filters, security, controllers) without opening a network port."],
+    ] },
+  { id: "errors", title: "Errors that make sense", time: "45 min", star: false,
+    goal: "See how one error travels from Java to a translated message on screen.",
+    trace: ["common/exception/ErrorCode.java", "common/exception/BusinessException.java", "common/exception/GlobalExceptionHandler.java", "frontend: shared/api/errors.ts", "frontend: shared/i18n/en.ts · ko.ts (err.* keys)"],
+    todo: ["Trigger 'sold out' and find the JSON in the browser Network tab.", "Switch to Korean and trigger it again."],
+    breakIt: "Throw a plain RuntimeException in a controller. What does the client see, and where is the real error written? (500 + generic message; the log)",
+    qa: [
+      ["Why a stable error code instead of matching the message text?", "Messages change and get translated; the code (TICKET_SOLD_OUT) is a stable contract the frontend can rely on."],
+      ["Why not show the exception message to users?", "It can leak internals (SQL, class names) and helps attackers. Log details, show a safe message."],
+    ] },
+  { id: "fe-basics", title: "Frontend basics (Next.js)", time: "90 min", star: false,
+    goal: "Understand Server vs Client Components and hydration.",
+    trace: ["frontend: app/page.tsx (Server Component)", "shared/api/server-api.ts", "app/event-grid.tsx (\"use client\")", "entities/event/ui.tsx (EventCard)", "shared/lib/format.ts (the hydration bug fix)"],
+    todo: ["List which files have \"use client\" and explain why each needs it.", "View page source (Ctrl/Cmd+U) on the home page: the event names are already in the HTML. Why does that help SEO?"],
+    breakIt: "Remove \"use client\" from app/event-search.tsx. Read the error. What can't a Server Component do?",
+    qa: [
+      ["Server vs Client Component?", "Server: runs only on the server, can fetch data directly, sends HTML, no JS for it in the browser. Client: runs in the browser too; needed for state, clicks and effects."],
+      ["What is hydration, and why did dates break it?", "React attaches to server HTML and expects identical text. Node and the browser formatted dates differently ('19:00' vs 'at 19:00'), so we now build dates by hand."],
+    ] },
+  { id: "fe-data", title: "Frontend data & state", time: "90 min", star: false,
+    goal: "See how data is fetched, cached and refreshed in the browser.",
+    trace: ["frontend: app/my/tickets/my-tickets-view.tsx (useQuery)", "features/order/buy-panel.tsx (useMutation)", "entities/event/api.ts (query key factory)", "shared/session/session-store.ts (Zustand)", "shared/api/http.ts (interceptors)", "next.config.ts (rewrites)"],
+    todo: ["Buy a ticket and see 'My tickets' update without reloading — find the invalidateQueries call.", "Find every place that reads the token."],
+    breakIt: "Remove invalidateQueries from buy-panel.tsx. Buy a ticket, open My tickets. What's wrong for 30 seconds? (staleTime)",
+    qa: [
+      ["Server state vs client state?", "Server state lives on the backend (events, tickets) — cache it with TanStack Query. Client state lives only in the browser (token, language, theme) — Zustand."],
+      ["What does invalidateQueries do?", "Marks cached data as old, so it's fetched again the next time it's shown."],
+    ] },
+  { id: "polish", title: "Polish: i18n, theme, account", time: "45 min", star: false,
+    goal: "See how real-product details are built.",
+    trace: ["frontend: shared/i18n/en.ts · ko.ts · use-t.ts", "shared/prefs/prefs-store.ts (PREFS_INIT_SCRIPT)", "app/globals.css (design tokens)", "features/account/account-view.tsx", "backend: user/UserService.changePassword()"],
+    todo: ["Add a new text key in en.ts only and run npm run typecheck — what does TypeScript say?", "Change --accent in globals.css and watch the whole app recolor."],
+    breakIt: "Delete the inline theme script from layout.tsx, choose Dark, reload. What flashes, and why?",
+    qa: [
+      ["How does dark mode avoid the white flash?", "A tiny script in <head> reads the saved theme and sets class=\"dark\" before the page paints, before React loads."],
+      ["Why /users/me instead of /users/{id}?", "The id comes from the token, so a user can only ever reach their own data. With {id} you must remember to check ownership everywhere."],
+      ["Why ask for the current password to change it?", "If someone uses an unlocked, logged-in device, they still can't take over the account."],
+    ] },
+];
+
+/* ---------- race lab: 2 buyers, 1 seat left (sold 99 / 100) ---------- */
+const LAB = {
+  NAIVE: {
+    label: "v1 · Naive", good: false,
+    sql: "-- in Java\nint left = total - sold;   // read\nif (qty > left) throw soldOut;  // check\nsold = sold + qty;   // write (later, at commit)",
+    pros: ["Simple to write"], cons: ["Oversells under concurrency", "Lost updates corrupt the counter"],
+    steps: [
+      { who: "a", a: "READ sold = 99 → \"1 left, OK!\"", db: "sold 99 · tickets 99" },
+      { who: "b", b: "READ sold = 99 → \"1 left, OK!\"", db: "sold 99 · tickets 99", note: "Both saw the same old value." },
+      { who: "a", a: "WRITE sold = 100 · create ticket #100", db: "sold 100 · tickets 100" },
+      { who: "b", b: "WRITE sold = 100 · create ticket #101", db: "sold 100 · tickets 101 ❌", bad: true },
+    ],
+    verdict: "OVERSOLD: 101 tickets for 100 seats, and \"sold\" still says 100 (B's write erased A's — a lost update). In the real test: 1,000 tickets, sold = 30.",
+  },
+  PESSIMISTIC: {
+    label: "Pessimistic lock", good: true,
+    sql: "SELECT * FROM ticket_types WHERE id = ? FOR UPDATE;  -- lock + fresh read\n-- check in Java, then\nUPDATE ticket_types SET sold = ? WHERE id = ?;\nCOMMIT;  -- lock released",
+    pros: ["Easy to reason about", "No retries"], cons: ["Buyers wait in line for the row", "Long transactions = long waits"],
+    steps: [
+      { who: "a", a: "SELECT … FOR UPDATE → gets the lock, reads 99", db: "sold 99 · 🔒 A" },
+      { who: "b", b: "SELECT … FOR UPDATE → ⏳ waits (row locked by A)", db: "sold 99 · 🔒 A" },
+      { who: "a", a: "1 left → WRITE 100 · ticket #100 · COMMIT", db: "sold 100 · tickets 100 · 🔓" },
+      { who: "b", b: "lock granted → reads 100 → \"0 left\" → SOLD OUT", db: "sold 100 · tickets 100", good: true },
+    ],
+    verdict: "Correct. B had to wait, then saw the real value. Safe, but under a huge rush everyone queues on one row.",
+  },
+  OPTIMISTIC: {
+    label: "Optimistic (CAS)", good: true,
+    sql: "SELECT sold, version FROM ticket_types WHERE id = ?;  -- 99, v7\nUPDATE ticket_types SET sold = 100, version = 8\n WHERE id = ? AND version = 7;  -- 0 rows? someone was faster → retry",
+    pros: ["No lock while deciding", "Great when conflicts are rare"], cons: ["Retries under contention", "Can give up (\"busy\") in a huge rush"],
+    steps: [
+      { who: "a", a: "READ sold = 99, version = 7", db: "sold 99 · v7" },
+      { who: "b", b: "READ sold = 99, version = 7", db: "sold 99 · v7" },
+      { who: "a", a: "UPDATE … WHERE version = 7 → 1 row ✓ · ticket #100", db: "sold 100 · v8 · tickets 100" },
+      { who: "b", b: "UPDATE … WHERE version = 7 → 0 rows (it's v8 now) → conflict!", db: "sold 100 · v8" },
+      { who: "b", b: "RETRY: read 100 → \"0 left\" → SOLD OUT", db: "sold 100 · v8 · tickets 100", good: true },
+    ],
+    verdict: "Correct. B's write was rejected because the version changed, so B retried with fresh data.",
+  },
+  ATOMIC: {
+    label: "Atomic UPDATE ★ default", good: true,
+    sql: "UPDATE ticket_types\n   SET sold = sold + 1\n WHERE id = ? AND sold + 1 <= total_available;\n-- 1 row → you got it · 0 rows → sold out",
+    pros: ["One round-trip, no retries", "The database guarantees it", "Fastest here"], cons: ["Logic lives in SQL", "Only for simple rules (counters)"],
+    steps: [
+      { who: "a", a: "UPDATE … WHERE 99 + 1 ≤ 100 → 1 row ✓ (row locked until commit)", db: "sold 100 (A, not committed) · 🔒 A" },
+      { who: "b", b: "same UPDATE → ⏳ waits for A's row lock", db: "🔒 A" },
+      { who: "a", a: "ticket #100 · COMMIT", db: "sold 100 · tickets 100 · 🔓" },
+      { who: "b", b: "PostgreSQL RE-CHECKS with the new value: 100 + 1 ≤ 100? No → 0 rows → SOLD OUT", db: "sold 100 · tickets 100", good: true },
+    ],
+    verdict: "Correct, with the least work: check and write are one statement, and PostgreSQL re-evaluates the WHERE after the lock is released.",
+  },
+};
+
+const RACE_RESULTS = [
+  ["NAIVE (v1)", 1000, 0, 30, 1000, "2207 ms", false],
+  ["PESSIMISTIC", 100, 900, 100, 100, "1050 ms", true],
+  ["OPTIMISTIC", 100, 900, 100, 100, "886 ms", true],
+  ["ATOMIC (default)", 100, 900, 100, 100, "924 ms", true],
 ];
 
 /* ======================================================================
@@ -1064,6 +1400,96 @@ $("#glossSearch").addEventListener("input", (e) => renderGloss(e.target.value.tr
 /* versions */
 $("#timeline").innerHTML = VERSIONS.map(([v, what, st]) =>
   `<div class="tl ${st === "done" ? "done" : st === "next" ? "next" : ""}"><span class="v">${v}</span><span>${esc(what)}</span>${st === "done" ? '<span class="pill p-ok">✓ done</span>' : st === "next" ? '<span class="pill p-warn">next</span>' : '<span class="pill p-todo">planned</span>'}</div>`).join("");
+
+/* learning path */
+(function () {
+  const KEY = "tr-map-lessons";
+  let done = new Set();
+  try { done = new Set(JSON.parse(localStorage.getItem(KEY) || "[]")); } catch (e) {}
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify([...done])); } catch (e) {} };
+  const root = $("#lessons");
+  function render() {
+    root.innerHTML = LESSONS.map((l, i) => `
+      <details class="lesson ${done.has(l.id) ? "done" : ""}" data-id="${l.id}">
+        <summary>
+          <span class="num">${done.has(l.id) ? "✓" : i + 1}</span>
+          <span><span class="t">${esc(l.title)} ${l.star ? '<span class="star">★</span>' : ""}</span><br><span class="meta">${esc(l.time)} · ${esc(l.goal)}</span></span>
+          <span class="muted small">▾</span>
+        </summary>
+        <div class="lesson-body">
+          <div>
+            <h4>Trace in this order</h4>
+            <ol class="trace">${l.trace.map((t) => `<li><code>${esc(t)}</code></li>`).join("")}</ol>
+            <h4 style="margin-top:12px">Do</h4>
+            <ul class="todo">${l.todo.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
+            <div class="breakit" style="margin-top:12px"><b>🔨 Break it on purpose:</b> ${esc(l.breakIt)}</div>
+          </div>
+          <div class="qa">
+            <h4>Interview check — answer out loud, then reveal</h4>
+            ${l.qa.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join("")}
+            <button class="btn done-btn" type="button" data-done="${l.id}" style="margin-top:12px">${done.has(l.id) ? "↺ Mark as not done" : "✓ Mark lesson done"}</button>
+          </div>
+        </div>
+      </details>`).join("");
+    root.querySelectorAll("[data-done]").forEach((b) => b.addEventListener("click", () => {
+      const id = b.dataset.done;
+      const open = [...root.querySelectorAll("details.lesson[open]")].map((d) => d.dataset.id);
+      done.has(id) ? done.delete(id) : done.add(id);
+      save(); render();
+      open.filter((o) => o !== id).forEach((o) => { const d = root.querySelector(`[data-id="${o}"]`); if (d) d.open = true; });
+    }));
+    $("#learnBar").style.width = `${(done.size / LESSONS.length) * 100}%`;
+    $("#learnCount").textContent = `${done.size} / ${LESSONS.length} done`;
+  }
+  $("#learnReset").addEventListener("click", () => { done.clear(); save(); render(); });
+  render();
+})();
+
+/* race lab */
+(function () {
+  let key = "NAIVE", step = 0, timer = null;
+  const tabs = $("#labTabs");
+  Object.entries(LAB).forEach(([k, v]) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.role = "tab"; b.dataset.key = k; b.textContent = v.label;
+    b.addEventListener("click", () => { key = k; step = 0; stop(); render(); });
+    tabs.appendChild(b);
+  });
+  const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
+  function render() {
+    const lab = LAB[key];
+    tabs.querySelectorAll("button").forEach((b) => b.setAttribute("aria-selected", b.dataset.key === key));
+    const lanes = $("#lanes");
+    lanes.querySelectorAll(".cell").forEach((c) => c.remove());
+    lab.steps.forEach((st, i) => {
+      const on = i < step, now = i === step - 1;
+      const mark = (extra) => `cell ${extra} ${on ? "on" : ""} ${now ? "now" : ""}`;
+      const flag = on && st.bad ? " bad" : on && st.good ? " good" : "";
+      lanes.insertAdjacentHTML("beforeend",
+        `<div class="${mark(st.who === "a" ? "a" : "empty")}">${st.who === "a" ? esc(st.a) : ""}</div>` +
+        `<div class="${mark("db") + flag}">${esc(st.db)}${st.note && on ? `<br><span class="muted">${esc(st.note)}</span>` : ""}</div>` +
+        `<div class="${mark(st.who === "b" ? "b" : "empty")}">${st.who === "b" ? esc(st.b) : ""}</div>`);
+    });
+    $("#labCount").textContent = `step ${step} / ${lab.steps.length}`;
+    $("#labNext").disabled = step >= lab.steps.length;
+    const v = $("#labVerdict");
+    v.className = "verdict" + (step >= lab.steps.length ? " show " + (lab.good ? "good" : "bad") : "");
+    v.textContent = step >= lab.steps.length ? (lab.good ? "✅ " : "❌ ") + lab.verdict : "";
+    $("#labInfo").innerHTML = `<span class="pill ${lab.good ? "p-ok" : "p-warn"}">${lab.good ? "safe" : "unsafe"}</span>
+      <h3 style="margin-top:10px">${esc(lab.label)}</h3><pre class="sql">${esc(lab.sql)}</pre>
+      <div class="pc"><div><b>👍 Good</b><ul>${lab.pros.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>
+      <div><b>👎 Watch out</b><ul>${lab.cons.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div></div>`;
+  }
+  $("#labNext").addEventListener("click", () => { if (step < LAB[key].steps.length) { step++; render(); } });
+  $("#labReset").addEventListener("click", () => { stop(); step = 0; render(); });
+  $("#labPlay").addEventListener("click", () => {
+    stop(); step = 0; render();
+    timer = setInterval(() => { if (step >= LAB[key].steps.length) return stop(); step++; render(); }, 1100);
+  });
+  render();
+  $("#raceTable").innerHTML = RACE_RESULTS.map(([name, ok, out, sold, rows, ms, good]) =>
+    `<tr><td><b>${esc(name)}</b></td><td>${ok}</td><td>${out}</td><td>${sold}</td><td>${rows}</td><td>${ms}</td><td>${good ? '<span class="pill p-ok">✓ correct</span>' : '<span class="pill p-warn">✗ oversold</span>'}</td></tr>`).join("");
+})();
 
 /* highlight current section in the top nav */
 (function () {

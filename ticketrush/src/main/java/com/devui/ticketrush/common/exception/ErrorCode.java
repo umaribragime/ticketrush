@@ -13,6 +13,8 @@ public enum ErrorCode {
     EMAIL_ALREADY_USED(HttpStatus.CONFLICT, "This email is already registered."),
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "Email or password is wrong."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "User not found."),
+    CURRENT_PASSWORD_INCORRECT(HttpStatus.BAD_REQUEST, "Current password is wrong."),
+    NEW_PASSWORD_SAME_AS_OLD(HttpStatus.BAD_REQUEST, "New password must be different from the current one."),
 
     // event
     EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "Event not found."),
@@ -28,6 +30,7 @@ public enum ErrorCode {
     TICKET_TYPE_NOT_FOUND(HttpStatus.NOT_FOUND, "Ticket type not found for this event."),
     TICKET_SOLD_OUT(HttpStatus.CONFLICT, "Not enough tickets left."),
     ORDER_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "Too many tickets in one order."),
+    STOCK_BUSY(HttpStatus.CONFLICT, "Too many people are buying right now. Please try again."),
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "Order not found."),
 
     // ticket / check-in

@@ -24,6 +24,8 @@ app:
     issuer: ticketrush
   order:
     max-tickets-per-order: 4
+    # How stock is taken under concurrency: ATOMIC (default) | PESSIMISTIC | OPTIMISTIC | NAIVE (unsafe, demo only)
+    stock-strategy: ${STOCK_STRATEGY:ATOMIC}
 
 management:
   endpoints:

@@ -81,3 +81,75 @@ cannot catch rendering errors — only fetch errors. Fixed by fetching in the tr
 - [ ] Why CSS variables + one `dark` class instead of writing `dark:` on every element?
 - [ ] Why does the theme script run before React? What is FOUC ("flash of unstyled content")?
 - [ ] Why must `ko.ts` be `Record<MessageKey, string>`? What happens if a key is missing?
+
+## v1 polish — real-user features (2026-11-18)
+
+**What changed**
+- Removed developer-only buttons from the UI: TanStack Query Devtools (package uninstalled) and the
+  Next.js dev indicator (`devIndicators: false`). Build/runtime errors still show in dev.
+- Own tab icon: `src/app/icon.svg` (Next.js picks it up automatically).
+- **My account** (`/account`): profile card with roles + member since, ticket/order stats, change name,
+  change password, language/theme preferences, log out. Backend: `PATCH /users/me`,
+  `PUT /users/me/password`, `GET /users/me/summary` (+ 7 integration tests).
+- Avatar **user menu** in the header; a real footer (links, ©, KST note) instead of "portfolio project".
+- Logged-in users who open /login or /signup are sent home.
+
+**Design decisions**
+- Changing the password requires the current one — a stolen, still-open session can't lock the owner out.
+- The header reads the name from `/users/me` (not the JWT), so a rename shows instantly without logging in again.
+- Email can't be changed (it's the login ID).
+
+**Known limits**
+- JWTs are stateless: after a password change, tokens already issued on *other* devices stay valid
+  until they expire (2 h). A token version / refresh-token design would fix this later.
+
+**To study**
+- [ ] Why does `UserService.changePassword` check the current password even though the user is logged in?
+- [ ] Why is `/users/me` safer than `/users/{id}` for "my data"?
+- [ ] Why must `features/` never import from `widgets/` (we moved `Avatar` to `shared/`)?
+
+**Bug: hydration error from date formatting (found 2026-11-18)**
+The Next.js error overlay appeared because server HTML and browser HTML had different text:
+`Thu, Dec 24, 2026, 19:00 KST` (Node.js) vs `Thu, Dec 24, 2026 at 19:00 KST` (browser).
+Cause: `Intl.DateTimeFormat` output depends on the ICU library version, and Node and each browser
+ship different versions. Fix: dates are now built by hand from UTC+9 (Korea has no daylight saving),
+so server and browser always produce identical text. A unit test pins the exact output.
+Lesson: anything rendered on the server must produce the *same string* in the browser —
+watch out for `Date.now()`, random values, and locale formatting.
+- [ ] To study: what exactly is "hydration", and why does a one-character difference break it?
+
+## v2 — Overselling under concurrency (2026-11-18)
+
+**Problem (proven first):** a race test fires 1,000 "buy 1 VIP" attempts at 100 seats, all released at
+the same instant (CountDownLatch), on a real PostgreSQL 17 (Testcontainers). v1 result:
+**1,000 successful orders, 1,000 tickets, and `sold` = 30.** Two bugs in one: overselling AND lost updates
+(many transactions read the same `sold`, each wrote its own +1, erasing the others).
+
+**Fix: `order/stock/StockService` with 3 safe strategies (+ the naive one for the demo)**
+| Strategy | How | Result (1,000 → 100) | Time |
+|---|---|---|---|
+| NAIVE (v1) | read → check in Java → write | ❌ 1,000 tickets | 2207 ms |
+| PESSIMISTIC | `refresh(type, PESSIMISTIC_WRITE)` = `SELECT … FOR UPDATE` + fresh read | ✅ 100 | 1050 ms |
+| OPTIMISTIC | read `sold, version` → `UPDATE … WHERE version = ?` → retry (max 30, random back-off) | ✅ 100 | 886 ms |
+| **ATOMIC** (default) | `UPDATE … SET sold = sold + :q WHERE sold + :q <= total_available` | ✅ 100 | 924 ms |
+
+**Details that matter (interview gold)**
+- Pessimistic: a locked query would return the *already cached* entity with the old `sold`.
+  `EntityManager.refresh(..., PESSIMISTIC_WRITE)` locks AND reloads. Without the reload it still oversells.
+- Atomic: PostgreSQL row-locks during the UPDATE; a waiting UPDATE re-checks its WHERE against the new
+  committed value (READ COMMITTED), so it can't pass the limit.
+- Ticket types are reserved in sorted id order → no deadlocks between multi-type orders.
+- `CHECK (0 <= sold <= total_available)` is a safety net, NOT a fix: in a lost update the counter goes
+  down, so the CHECK never fires while extra tickets are created.
+- Race tests run on PostgreSQL, not H2: locking/isolation differ, H2 could hide the bug.
+- Optimistic can say "busy" (STOCK_BUSY, 409) under a huge rush even if seats remain — the trade-off.
+- Lock/deadlock failures from the DB map to STOCK_BUSY instead of a 500.
+
+**Commands**
+- `./mvnw test` — includes the 3 safe race tests (assert: never oversell).
+- `./mvnw test -Ddemo` — runs the naive demo on purpose. Results table: `target/race-results.md`.
+- `STOCK_STRATEGY=PESSIMISTIC` (etc.) to run the app with another strategy.
+
+**Next problem (v4):** with 100,000 buyers the hot row itself becomes the bottleneck → waiting queue in Redis.
+
+**To study** — see lesson 6 in index.html (Race Lab + interview questions).
