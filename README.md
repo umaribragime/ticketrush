@@ -11,6 +11,7 @@ ticket-rush/
 ├── ticketrush/          Spring Boot backend (REST API)
 ├── frontend/            Next.js frontend (English + Korean, light/dark)
 ├── docker-compose.yaml  PostgreSQL
+├── index.html           Visual map of the whole app (open in a browser)
 └── README / DESIGN / ROADMAP / NOTES
 ```
 
@@ -71,6 +72,7 @@ Errors use RFC 9457 Problem Details with a stable `code`, for example:
 The frontend maps each `code` to an English or Korean message (`frontend/src/shared/i18n`).
 
 ## Docs
+- **[index.html](index.html): the visual project map** — open it in a browser: architecture, step-by-step request flows, folders, pages, API, data model
 - [DESIGN.md](DESIGN.md): actors, data model, architecture (backend + frontend)
 - [ROADMAP.md](ROADMAP.md): versions v1–v10 and the job-skills checklist
 - [NOTES.md](NOTES.md): what was learned in each version

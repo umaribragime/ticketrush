@@ -29,6 +29,7 @@ Tick a box only when you have proof AND can explain it in an interview.
 - [ ] Using AI tools well: you review and fix what AI writes yourself — every version
 
 ## Rules
+- After each version, update `index.html` (the visual map): the `DATA` block at the bottom + the stats at the top.
 - One brick at a time. Each version solves ONE real problem.
 - Every version ends with **proof**: a test, a number, or a screenshot.
 - Every version gets a section in `NOTES.md`: problem → what I tried → result → what I learned.

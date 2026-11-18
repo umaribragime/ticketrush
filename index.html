@@ -1,0 +1,1080 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TicketRush Map</title>
+<meta name="description" content="A living map of the TicketRush app: architecture, folders, request flows, data model and API." />
+<style>
+  /* ---------- design tokens (same palette as the app) ---------- */
+  :root {
+    --bg: #f5f2eb; --surface: #ffffff; --surface-2: #ede8de; --ink: #16131d; --muted: #6c6578;
+    --line: #e1dacd; --accent: #5b3df5; --accent-soft: #ebe6ff; --accent-ink: #4326d9;
+    --hot: #ff4f2e; --hot-soft: #ffe7e1; --volt: #c9f23d; --on-volt: #16131d;
+    --success: #12924a; --success-soft: #dcf5e6; --danger: #e0312f; --danger-soft: #fde4e3;
+    --warn: #c2620a; --warn-soft: #fff0dd;
+    --fe: #5b3df5; --be: #12924a; --db: #c2620a; --net: #ff4f2e;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0c0a11; --surface: #16131e; --surface-2: #211c2c; --ink: #f4f1fb; --muted: #a09aaf;
+      --line: #2e2839; --accent: #8e74ff; --accent-soft: #261e47; --accent-ink: #b9a9ff;
+      --hot: #ff6b4f; --hot-soft: #3a1a14; --volt: #d4ff4a; --success: #3ddc84; --success-soft: #0f2a1c;
+      --danger: #ff5b57; --danger-soft: #36161a; --warn: #ffab4a; --warn-soft: #33220f;
+      --fe: #a28dff; --be: #3ddc84; --db: #ffab4a; --net: #ff6b4f;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0c0a11; --surface: #16131e; --surface-2: #211c2c; --ink: #f4f1fb; --muted: #a09aaf;
+    --line: #2e2839; --accent: #8e74ff; --accent-soft: #261e47; --accent-ink: #b9a9ff;
+    --hot: #ff6b4f; --hot-soft: #3a1a14; --volt: #d4ff4a; --success: #3ddc84; --success-soft: #0f2a1c;
+    --danger: #ff5b57; --danger-soft: #36161a; --warn: #ffab4a; --warn-soft: #33220f;
+    --fe: #a28dff; --be: #3ddc84; --db: #ffab4a; --net: #ff6b4f;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 76px; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", Roboto, sans-serif;
+    word-break: keep-all;
+  }
+  a { color: var(--accent-ink); }
+  code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .88em; }
+  code { background: var(--surface-2); padding: .1em .4em; border-radius: 6px; overflow-wrap: anywhere; }
+  h1, h2, h3 { line-height: 1.15; letter-spacing: -0.02em; margin: 0; }
+  h2 { font-size: clamp(1.7rem, 4vw, 2.4rem); }
+  h3 { font-size: 1.15rem; }
+  p { margin: .4em 0; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+  section { padding: 56px 0 8px; }
+  .kicker { color: var(--accent-ink); font-size: .75rem; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; margin-bottom: 6px; }
+  .lead { color: var(--muted); font-size: 1.08rem; max-width: 760px; margin-top: 10px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 22px; }
+  .grid { display: grid; gap: 16px; }
+  @media (min-width: 760px) { .g2 { grid-template-columns: 1fr 1fr; } .g3 { grid-template-columns: repeat(3, 1fr); } .g4 { grid-template-columns: repeat(4, 1fr); } }
+  .pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 3px 10px; font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+  .p-fe { background: color-mix(in oklab, var(--fe) 16%, transparent); color: var(--fe); }
+  .p-be { background: color-mix(in oklab, var(--be) 16%, transparent); color: var(--be); }
+  .p-db { background: color-mix(in oklab, var(--db) 16%, transparent); color: var(--db); }
+  .p-net { background: color-mix(in oklab, var(--net) 16%, transparent); color: var(--net); }
+  .p-ok { background: var(--success-soft); color: var(--success); }
+  .p-todo { background: var(--surface-2); color: var(--muted); }
+  .p-warn { background: var(--warn-soft); color: var(--warn); }
+  .note { border-left: 4px solid var(--hot); background: var(--hot-soft); padding: 12px 16px; border-radius: 12px; margin-top: 16px; }
+  .tip { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 12px 16px; border-radius: 12px; margin-top: 16px; }
+  .muted { color: var(--muted); }
+  .small { font-size: .88rem; }
+
+  /* ---------- header ---------- */
+  header.top { position: sticky; top: 0; z-index: 20; background: color-mix(in oklab, var(--bg) 82%, transparent); backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
+  header.top .wrap { display: flex; align-items: center; gap: 12px; height: 60px; }
+  .logo { display: flex; align-items: center; gap: 8px; font-weight: 800; text-decoration: none; color: var(--ink); flex-shrink: 0; }
+  .logo b { background: var(--volt); color: var(--on-volt); width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; transform: rotate(-12deg); font-size: 15px; }
+  .logo span em { color: var(--accent); font-style: normal; }
+  nav.toc { display: flex; gap: 2px; overflow-x: auto; flex: 1; min-width: 0; scrollbar-width: none; }
+  nav.toc::-webkit-scrollbar { display: none; }
+  nav.toc a { white-space: nowrap; color: var(--muted); text-decoration: none; font-size: .85rem; font-weight: 600; padding: 6px 10px; border-radius: 999px; }
+  nav.toc a:hover, nav.toc a.on { background: var(--ink); color: var(--bg); }
+  .theme-btn { flex-shrink: 0; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; height: 34px; padding: 0 12px; font-weight: 700; cursor: pointer; }
+
+  /* ---------- hero ---------- */
+  .hero { padding: 56px 0 24px; }
+  .hero h1 { font-size: clamp(2.4rem, 7vw, 4.6rem); font-weight: 800; letter-spacing: -0.04em; }
+  .hero h1 mark { background: linear-gradient(transparent 58%, var(--volt) 58%); color: inherit; padding: 0 .08em; }
+  .stats { margin-top: 28px; }
+  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; }
+  .stat b { display: block; font-size: 1.9rem; letter-spacing: -0.03em; }
+  .stat span { color: var(--muted); font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+
+  /* ---------- diagrams ---------- */
+  .diagram { width: 100%; height: auto; display: block; }
+  .diagram text { fill: var(--ink); font-family: inherit; }
+  .diagram .t-muted { fill: var(--muted); }
+  .diagram .box { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+  .diagram .group { fill: none; stroke-width: 2; stroke-dasharray: 6 5; }
+  .diagram .node { transition: all .25s; }
+  .diagram .node rect { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; transition: all .25s; }
+  .diagram .node.active rect { stroke: var(--hot); stroke-width: 3.5; fill: var(--hot-soft); }
+  .diagram .arrow { stroke: var(--muted); stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+  .diagram .arrow.hot { stroke: var(--hot); }
+  .scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .scroll-x > svg { min-width: 760px; }
+
+  /* ---------- flow stepper ---------- */
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 18px 0; }
+  .tabs button { border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 999px; padding: 8px 14px; font-weight: 700; cursor: pointer; font-size: .9rem; }
+  .tabs button[aria-selected="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .stepper { display: grid; gap: 16px; }
+  .stepper > *, .grid > * { min-width: 0; } /* let grid columns shrink on phones */
+  @media (min-width: 900px) { .stepper { grid-template-columns: 1.15fr 1fr; } }
+  .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 560px; overflow: auto; }
+  .steps li button { width: 100%; text-align: left; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 14px; padding: 10px 12px; cursor: pointer; display: flex; gap: 10px; align-items: flex-start; font: inherit; }
+  .steps li button .n { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--surface-2); display: grid; place-items: center; font-weight: 800; font-size: .8rem; }
+  .steps li button[aria-current="step"] { border-color: var(--hot); background: var(--hot-soft); }
+  .steps li button[aria-current="step"] .n { background: var(--hot); color: #fff; }
+  .steps li button .t { font-weight: 700; font-size: .93rem; }
+  .detail h3 { margin: 8px 0; font-size: 1.3rem; }
+  .detail .where { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .detail .where code, td code { overflow-wrap: anywhere; }
+  .detail pre { background: var(--surface-2); border-radius: 12px; padding: 12px; overflow-x: auto; font-size: .82rem; margin: 12px 0 0; }
+  .nav-btns { display: flex; gap: 8px; margin-top: 14px; }
+  .btn { border: 0; background: var(--accent); color: #fff; border-radius: 999px; padding: 9px 16px; font-weight: 700; cursor: pointer; }
+  .btn.ghost { background: var(--surface-2); color: var(--ink); }
+  .btn:disabled { opacity: .4; cursor: default; }
+
+  /* ---------- folder explorer ---------- */
+  .explorer-tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+  .explorer-tools input { flex: 1; min-width: 220px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 10px 16px; font: inherit; }
+  .tree { list-style: none; margin: 0; padding-left: 0; }
+  .tree ul { list-style: none; margin: 0; padding-left: 18px; border-left: 1px dashed var(--line); margin-left: 9px; }
+  .tree li { margin: 2px 0; }
+  .tree details > summary { cursor: pointer; list-style: none; }
+  .tree details > summary::-webkit-details-marker { display: none; }
+  .row { display: flex; gap: 10px; align-items: baseline; padding: 4px 8px; border-radius: 8px; }
+  .row:hover { background: var(--surface-2); }
+  .row .name { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .86rem; font-weight: 700; overflow-wrap: anywhere; }
+  @media (max-width: 640px) { .row { flex-wrap: wrap; gap: 2px 10px; } .row .desc { flex-basis: 100%; padding-left: 26px; } }
+  .row .desc { color: var(--muted); font-size: .86rem; }
+  .row .ic { width: 16px; flex-shrink: 0; text-align: center; }
+  details[open] > summary .ic.folder::before { content: "📂"; }
+  details:not([open]) > summary .ic.folder::before { content: "📁"; }
+  .hit > .row .name, .hit > details > summary .name { background: var(--volt); color: var(--on-volt); border-radius: 4px; padding: 0 3px; }
+
+  /* ---------- tables ---------- */
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: .74rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  .table-card { padding: 0; overflow-x: auto; }
+  .method { font-weight: 800; font-size: .74rem; padding: 2px 7px; border-radius: 6px; }
+  .GET { background: var(--success-soft); color: var(--success); }
+  .POST { background: var(--accent-soft); color: var(--accent-ink); }
+  .PUT { background: var(--warn-soft); color: var(--warn); }
+
+  /* ---------- journeys ---------- */
+  .journey { display: grid; gap: 10px; }
+  .jstep { display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: start; }
+  .jstep .dot { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 800; }
+  .jstep .body { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; }
+  .jstep .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+
+  /* ---------- layers ---------- */
+  .layer-stack { display: flex; flex-direction: column; gap: 8px; }
+  .layer { border-radius: 14px; padding: 12px 14px; border: 1px solid var(--line); background: var(--surface); }
+  .layer b { display: block; }
+  .arrow-down { text-align: center; color: var(--muted); font-size: .8rem; margin: -2px 0; }
+
+  /* ---------- glossary ---------- */
+  .gloss { display: grid; gap: 10px; }
+  @media (min-width: 760px) { .gloss { grid-template-columns: 1fr 1fr; } }
+  .gloss .card { padding: 16px 18px; }
+  .gloss h3 { font-size: 1rem; }
+
+  /* ---------- timeline ---------- */
+  .timeline { display: grid; gap: 8px; }
+  .tl { display: grid; grid-template-columns: 44px 1fr auto; gap: 10px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px 16px; }
+  .tl .v { font-weight: 800; font-size: 1.1rem; }
+  .tl.done { border-color: color-mix(in oklab, var(--success) 50%, var(--line)); }
+  .tl.next { border-color: var(--hot); background: var(--hot-soft); }
+
+  footer { padding: 48px 0 64px; color: var(--muted); font-size: .88rem; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="logo" href="#top"><b>🎫</b><span>Ticket<em>Rush</em> Map</span></a>
+    <nav class="toc" id="toc" aria-label="Sections">
+      <a href="#big-picture">Big picture</a>
+      <a href="#flows">How it works</a>
+      <a href="#journeys">User journeys</a>
+      <a href="#layers">Layers</a>
+      <a href="#folders">Folders</a>
+      <a href="#pages">Pages</a>
+      <a href="#api">API</a>
+      <a href="#data">Data model</a>
+      <a href="#run">Run &amp; test</a>
+      <a href="#words">Words</a>
+      <a href="#versions">Versions</a>
+    </nav>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Switch light or dark">◐</button>
+  </div>
+</header>
+
+<main class="wrap" id="top">
+
+  <!-- ================= HERO ================= -->
+  <div class="hero">
+    <p class="kicker">Living project map · updated after every version</p>
+    <h1>How <mark>TicketRush</mark> works,<br/>on one page.</h1>
+    <p class="lead">
+      TicketRush is a concert ticketing app built to survive <b>ticket open (티켓 오픈)</b>: the moment
+      thousands of fans try to buy a few hundred tickets at the same second. This page is a map of the
+      whole app: what each part does, where it lives, and how a click travels from the browser to the
+      database and back.
+    </p>
+    <div class="grid g4 stats">
+      <div class="stat"><b>v1</b><span>current version</span></div>
+      <div class="stat"><b>13</b><span>API endpoints</span></div>
+      <div class="stat"><b>13</b><span>screens</span></div>
+      <div class="stat"><b>42</b><span>automated tests</span></div>
+    </div>
+    <div class="legend">
+      <span class="pill p-fe">● Frontend (Next.js)</span>
+      <span class="pill p-net">● Network</span>
+      <span class="pill p-be">● Backend (Spring Boot)</span>
+      <span class="pill p-db">● Database (PostgreSQL)</span>
+    </div>
+  </div>
+
+  <!-- ================= BIG PICTURE ================= -->
+  <section id="big-picture">
+    <p class="kicker">1 · Big picture</p>
+    <h2>Three programs work together</h2>
+    <p class="lead">
+      The <b>frontend</b> is what you see. The <b>backend</b> holds all the rules (who may buy, how many
+      tickets are left). The <b>database</b> remembers everything. They talk using HTTP requests with JSON.
+    </p>
+
+    <div class="card scroll-x" style="margin-top:20px">
+      <svg class="diagram" id="arch" viewBox="0 0 1100 470" role="img" aria-label="Architecture diagram">
+        <defs>
+          <marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="currentColor" style="color:var(--muted)"></path>
+          </marker>
+        </defs>
+
+        <!-- browser -->
+        <g class="node" id="n-browser">
+          <rect x="20" y="170" width="160" height="130" rx="18"></rect>
+          <text x="100" y="215" text-anchor="middle" font-weight="800" font-size="17">🌐 Browser</text>
+          <text x="100" y="240" text-anchor="middle" class="t-muted" font-size="12">Chrome, Safari,</text>
+          <text x="100" y="257" text-anchor="middle" class="t-muted" font-size="12">phone…</text>
+          <text x="100" y="282" text-anchor="middle" class="t-muted" font-size="11">localhost:3000</text>
+        </g>
+
+        <!-- next.js group -->
+        <rect class="group" x="225" y="20" width="300" height="430" rx="22" style="stroke:var(--fe)"></rect>
+        <text x="245" y="48" font-weight="800" font-size="15" style="fill:var(--fe)">FRONTEND · Next.js 16</text>
+        <text x="245" y="66" class="t-muted" font-size="11">frontend/ · port 3000</text>
+        <g class="node" id="n-rsc">
+          <rect x="245" y="85" width="260" height="92" rx="14"></rect>
+          <text x="262" y="112" font-weight="700" font-size="14">Server Components</text>
+          <text x="262" y="132" class="t-muted" font-size="11.5">Public pages (home, event).</text>
+          <text x="262" y="149" class="t-muted" font-size="11.5">HTML is built on the server with</text>
+          <text x="262" y="166" class="t-muted" font-size="11.5">data inside → fast + SEO.</text>
+        </g>
+        <g class="node" id="n-client">
+          <rect x="245" y="192" width="260" height="120" rx="14"></rect>
+          <text x="262" y="219" font-weight="700" font-size="14">Client Components</text>
+          <text x="262" y="239" class="t-muted" font-size="11.5">Buttons, forms, my tickets, dashboard.</text>
+          <text x="262" y="256" class="t-muted" font-size="11.5">TanStack Query = server data</text>
+          <text x="262" y="273" class="t-muted" font-size="11.5">Zustand = login token, language, theme</text>
+          <text x="262" y="290" class="t-muted" font-size="11.5">axios adds "Bearer &lt;JWT&gt;"</text>
+        </g>
+        <g class="node" id="n-proxy">
+          <rect x="245" y="327" width="260" height="100" rx="14"></rect>
+          <text x="262" y="354" font-weight="700" font-size="14">/api proxy (rewrite)</text>
+          <text x="262" y="374" class="t-muted" font-size="11.5">next.config.ts forwards</text>
+          <text x="262" y="391" class="t-muted" font-size="11.5">/api/* → localhost:8080/api/*</text>
+          <text x="262" y="408" class="t-muted" font-size="11.5">Same origin → no CORS needed</text>
+        </g>
+
+        <!-- spring group -->
+        <rect class="group" x="575" y="20" width="290" height="430" rx="22" style="stroke:var(--be)"></rect>
+        <text x="595" y="48" font-weight="800" font-size="15" style="fill:var(--be)">BACKEND · Spring Boot 4</text>
+        <text x="595" y="66" class="t-muted" font-size="11">ticketrush/ · port 8080</text>
+        <g class="node" id="s-security"><rect x="595" y="82" width="250" height="56" rx="12"></rect>
+          <text x="612" y="106" font-weight="700" font-size="13.5">① Security (JWT check)</text>
+          <text x="612" y="124" class="t-muted" font-size="11">SecurityConfig · 401 / 403</text></g>
+        <g class="node" id="s-controller"><rect x="595" y="150" width="250" height="56" rx="12"></rect>
+          <text x="612" y="174" font-weight="700" font-size="13.5">② Controllers (HTTP + JSON)</text>
+          <text x="612" y="192" class="t-muted" font-size="11">@Valid input · 400 if bad</text></g>
+        <g class="node" id="s-service"><rect x="595" y="218" width="250" height="56" rx="12"></rect>
+          <text x="612" y="242" font-weight="700" font-size="13.5">③ Services (business rules)</text>
+          <text x="612" y="260" class="t-muted" font-size="11">@Transactional · all or nothing</text></g>
+        <g class="node" id="s-entity"><rect x="595" y="286" width="250" height="56" rx="12"></rect>
+          <text x="612" y="310" font-weight="700" font-size="13.5">④ Entities (data + rules)</text>
+          <text x="612" y="328" class="t-muted" font-size="11">Event.publish(), TicketType.sell()</text></g>
+        <g class="node" id="s-repo"><rect x="595" y="354" width="250" height="56" rx="12"></rect>
+          <text x="612" y="378" font-weight="700" font-size="13.5">⑤ Repositories (JPA)</text>
+          <text x="612" y="396" class="t-muted" font-size="11">Java objects ↔ SQL rows</text></g>
+
+        <!-- database -->
+        <rect class="group" x="910" y="140" width="170" height="210" rx="22" style="stroke:var(--db)"></rect>
+        <text x="930" y="168" font-weight="800" font-size="13" style="fill:var(--db)">DOCKER</text>
+        <g class="node" id="db">
+          <rect x="925" y="180" width="140" height="150" rx="16"></rect>
+          <text x="995" y="220" text-anchor="middle" font-weight="800" font-size="15">🐘 PostgreSQL</text>
+          <text x="995" y="242" text-anchor="middle" class="t-muted" font-size="11">version 17</text>
+          <text x="995" y="262" text-anchor="middle" class="t-muted" font-size="11">port 5434</text>
+          <text x="995" y="290" text-anchor="middle" class="t-muted" font-size="11">9 tables, built</text>
+          <text x="995" y="306" text-anchor="middle" class="t-muted" font-size="11">by Flyway SQL</text>
+        </g>
+
+        <!-- arrows -->
+        <path class="arrow" d="M180,215 C210,215 220,135 245,135"></path>
+        <path class="arrow" d="M180,250 L245,250"></path>
+        <path class="arrow" d="M375,312 L375,327"></path>
+        <path class="arrow" d="M505,377 C545,377 555,110 595,110"></path>
+        <path class="arrow" d="M505,131 C548,131 552,178 595,178" style="stroke-dasharray:5 4"></path>
+        <path class="arrow" d="M720,138 L720,150"></path>
+        <path class="arrow" d="M720,206 L720,218"></path>
+        <path class="arrow" d="M720,274 L720,286"></path>
+        <path class="arrow" d="M720,342 L720,354"></path>
+        <path class="arrow" d="M845,382 C885,382 890,255 925,255"></path>
+        <text x="872" y="330" class="t-muted" font-size="10.5">SQL</text>
+      </svg>
+    </div>
+
+    <p class="small muted" style="margin-top:10px">Solid arrow from the proxy = browser API calls carrying your JWT.
+      Dashed arrow from Server Components = public data fetched server-to-server (no token).</p>
+    <div class="grid g3" style="margin-top:16px">
+      <div class="card"><span class="pill p-fe">Frontend</span><h3 style="margin-top:10px">What you see</h3>
+        <p class="muted small">Next.js + React + TypeScript. Pages, buttons, forms, English/Korean, light/dark.
+        It never stores the "truth" — it always asks the backend.</p></div>
+      <div class="card"><span class="pill p-be">Backend</span><h3 style="margin-top:10px">The rules</h3>
+        <p class="muted small">Spring Boot + Java 21. Checks the login token, validates input, applies business
+        rules (max 4 tickets, sales window, stock), and saves data.</p></div>
+      <div class="card"><span class="pill p-db">Database</span><h3 style="margin-top:10px">The memory</h3>
+        <p class="muted small">PostgreSQL in Docker. Users, events, ticket types, orders, tickets, QR codes,
+        and every gate scan.</p></div>
+    </div>
+  </section>
+
+  <!-- ================= FLOWS ================= -->
+  <section id="flows">
+    <p class="kicker">2 · How it works</p>
+    <h2>Follow one click, step by step</h2>
+    <p class="lead">Pick a story. Click each step (or use <b>Next</b>) and watch the highlighted box in the diagram move.</p>
+
+    <div class="tabs" role="tablist" id="flowTabs"></div>
+
+    <div class="stepper">
+      <div class="card">
+        <svg class="diagram" id="mini" style="max-height:520px" viewBox="0 0 520 560" role="img" aria-label="Where this step happens">
+          <g class="node" data-id="n-browser"><rect x="10" y="20" width="150" height="70" rx="14"></rect>
+            <text x="85" y="62" text-anchor="middle" font-weight="700" font-size="14">🌐 Browser</text></g>
+          <rect class="group" x="180" y="10" width="160" height="300" rx="16" style="stroke:var(--fe)"></rect>
+          <text x="194" y="32" font-weight="800" font-size="12" style="fill:var(--fe)">NEXT.JS</text>
+          <g class="node" data-id="n-rsc"><rect x="192" y="44" width="136" height="70" rx="12"></rect>
+            <text x="260" y="76" text-anchor="middle" font-weight="700" font-size="12.5">Server</text>
+            <text x="260" y="94" text-anchor="middle" font-weight="700" font-size="12.5">Components</text></g>
+          <g class="node" data-id="n-client"><rect x="192" y="124" width="136" height="80" rx="12"></rect>
+            <text x="260" y="160" text-anchor="middle" font-weight="700" font-size="12.5">Client</text>
+            <text x="260" y="178" text-anchor="middle" font-weight="700" font-size="12.5">Components</text></g>
+          <g class="node" data-id="n-proxy"><rect x="192" y="214" width="136" height="80" rx="12"></rect>
+            <text x="260" y="250" text-anchor="middle" font-weight="700" font-size="12.5">/api proxy</text>
+            <text x="260" y="268" text-anchor="middle" class="t-muted" font-size="11">rewrite</text></g>
+          <rect class="group" x="360" y="10" width="150" height="390" rx="16" style="stroke:var(--be)"></rect>
+          <text x="374" y="32" font-weight="800" font-size="12" style="fill:var(--be)">SPRING BOOT</text>
+          <g class="node" data-id="s-security"><rect x="372" y="44" width="126" height="56" rx="12"></rect>
+            <text x="435" y="77" text-anchor="middle" font-weight="700" font-size="12">① Security</text></g>
+          <g class="node" data-id="s-controller"><rect x="372" y="110" width="126" height="56" rx="12"></rect>
+            <text x="435" y="143" text-anchor="middle" font-weight="700" font-size="12">② Controller</text></g>
+          <g class="node" data-id="s-service"><rect x="372" y="176" width="126" height="56" rx="12"></rect>
+            <text x="435" y="209" text-anchor="middle" font-weight="700" font-size="12">③ Service</text></g>
+          <g class="node" data-id="s-entity"><rect x="372" y="242" width="126" height="56" rx="12"></rect>
+            <text x="435" y="275" text-anchor="middle" font-weight="700" font-size="12">④ Entity</text></g>
+          <g class="node" data-id="s-repo"><rect x="372" y="308" width="126" height="56" rx="12"></rect>
+            <text x="435" y="341" text-anchor="middle" font-weight="700" font-size="12">⑤ Repository</text></g>
+          <rect class="group" x="300" y="420" width="210" height="125" rx="16" style="stroke:var(--db)"></rect>
+          <g class="node" data-id="db"><rect x="320" y="440" width="170" height="90" rx="14"></rect>
+            <text x="405" y="482" text-anchor="middle" font-weight="800" font-size="14">🐘 PostgreSQL</text>
+            <text x="405" y="502" text-anchor="middle" class="t-muted" font-size="11">tables &amp; rows</text></g>
+          <path class="arrow" d="M160,55 L192,70"></path>
+          <path class="arrow" d="M160,70 L192,150"></path>
+          <path class="arrow" d="M260,204 L260,214"></path>
+          <path class="arrow" d="M328,254 C350,254 350,72 372,72"></path>
+          <path class="arrow" d="M435,364 L435,440"></path>
+        </svg>
+      </div>
+
+      <div class="card detail" aria-live="polite">
+        <span class="pill" id="stepLayer"></span>
+        <h3 id="stepTitle"></h3>
+        <p id="stepText"></p>
+        <div class="where" id="stepFiles"></div>
+        <pre id="stepCode" hidden></pre>
+        <div class="nav-btns">
+          <button class="btn ghost" id="prevBtn" type="button">← Back</button>
+          <button class="btn" id="nextBtn" type="button">Next →</button>
+          <span class="muted small" id="stepCount" style="align-self:center"></span>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <ol class="steps" id="stepList"></ol>
+    </div>
+  </section>
+
+  <!-- ================= JOURNEYS ================= -->
+  <section id="journeys">
+    <p class="kicker">3 · User journeys</p>
+    <h2>Who uses the app, and how</h2>
+    <p class="lead">One account can have several <b>roles</b>. Every new user is an <b>ATTENDEE</b>. Choosing
+      "Organize" at sign-up adds <b>ORGANIZER</b>. An organizer can make any user <b>STAFF</b> for an event.</p>
+    <div class="tabs" role="tablist" id="journeyTabs"></div>
+    <div class="journey" id="journey"></div>
+  </section>
+
+  <!-- ================= LAYERS ================= -->
+  <section id="layers">
+    <p class="kicker">4 · Layers</p>
+    <h2>Each part has one job</h2>
+    <p class="lead">Both apps are split into layers. A layer only talks to the layer below it. This keeps code
+      easy to find, test and change — interviewers ask about this a lot.</p>
+    <div class="grid g2" style="margin-top:20px">
+      <div class="card">
+        <span class="pill p-be">Backend layers (per feature)</span>
+        <div class="layer-stack" style="margin-top:14px">
+          <div class="layer"><b>Controller</b><span class="muted small">Speaks HTTP. Reads JSON, checks input with <code>@Valid</code>, returns JSON. No business rules.</span></div>
+          <div class="arrow-down">▼ calls</div>
+          <div class="layer"><b>Service</b><span class="muted small">The use case: "place an order". Runs inside a <code>@Transactional</code> (all steps succeed, or none).</span></div>
+          <div class="arrow-down">▼ uses</div>
+          <div class="layer"><b>Entity</b><span class="muted small">Data + its own rules: <code>Event.publish()</code>, <code>TicketType.sell()</code>, <code>Order.addTicket()</code>.</span></div>
+          <div class="arrow-down">▼ saved by</div>
+          <div class="layer"><b>Repository</b><span class="muted small">Spring Data JPA. Writes SQL for us from method names like <code>findByOrganizerId</code>.</span></div>
+        </div>
+        <p class="small muted" style="margin-top:12px">Code is grouped <b>by feature</b> (auth, event, order, ticket, checkin), not by layer —
+          everything about "orders" lives in one folder.</p>
+      </div>
+      <div class="card">
+        <span class="pill p-fe">Frontend layers (Feature-Sliced Design)</span>
+        <div class="layer-stack" style="margin-top:14px">
+          <div class="layer"><b>app/</b><span class="muted small">Routes = pages. Thin: they only put pieces together.</span></div>
+          <div class="arrow-down">▼ may import</div>
+          <div class="layer"><b>widgets/</b><span class="muted small">Big blocks on many pages: header, footer.</span></div>
+          <div class="arrow-down">▼</div>
+          <div class="layer"><b>features/</b><span class="muted small">User actions: log in, buy tickets, scan a QR, fill the event form.</span></div>
+          <div class="arrow-down">▼</div>
+          <div class="layer"><b>entities/</b><span class="muted small">Business objects: event, ticket/order — their API calls, query keys, badges.</span></div>
+          <div class="arrow-down">▼</div>
+          <div class="layer"><b>shared/</b><span class="muted small">No business meaning: HTTP client, UI kit, i18n, formatting, stores.</span></div>
+        </div>
+        <p class="small muted" style="margin-top:12px">Rule: imports only go <b>downward</b>. <code>shared</code> never imports from <code>features</code>.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FOLDERS ================= -->
+  <section id="folders">
+    <p class="kicker">5 · Folder map</p>
+    <h2>Where every file lives</h2>
+    <p class="lead">Every folder and important file, with one line about what it does. Type to search (try
+      <code>order</code>, <code>jwt</code>, <code>qr</code>, <code>i18n</code>).</p>
+    <div class="explorer-tools">
+      <input id="treeSearch" type="search" placeholder="Search files and descriptions…" aria-label="Search files" />
+      <button class="btn ghost" id="expandAll" type="button">Open all</button>
+      <button class="btn ghost" id="collapseAll" type="button">Close all</button>
+    </div>
+    <div class="card"><ul class="tree" id="tree"></ul></div>
+  </section>
+
+  <!-- ================= PAGES ================= -->
+  <section id="pages">
+    <p class="kicker">6 · Pages</p>
+    <h2>Every screen and where its data comes from</h2>
+    <p class="lead"><span class="pill p-be">Server</span> = data fetched on the server, inside the first HTML.
+      <span class="pill p-fe">Client</span> = data fetched by the browser after the page loads (needs login).</p>
+    <div class="card table-card" style="margin-top:16px">
+      <table>
+        <thead><tr><th>URL</th><th>Who</th><th>What it shows</th><th>Data</th><th>Main file</th></tr></thead>
+        <tbody id="pagesTable"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= API ================= -->
+  <section id="api">
+    <p class="kicker">7 · Backend API</p>
+    <h2>All 13 endpoints</h2>
+    <p class="lead">An <b>endpoint</b> is a URL the backend answers. Try them yourself in Swagger:
+      <a href="http://localhost:8080/swagger-ui.html">localhost:8080/swagger-ui.html</a> (backend must be running).</p>
+    <div class="card table-card" style="margin-top:16px">
+      <table>
+        <thead><tr><th>Method</th><th>Path</th><th>Who may call</th><th>What it does</th><th>Code</th></tr></thead>
+        <tbody id="apiTable"></tbody>
+      </table>
+    </div>
+    <div class="tip"><b>Errors look the same everywhere</b> (RFC 9457 "Problem Details"):
+      <code>{"status":409,"code":"TICKET_SOLD_OUT","detail":"Only 0 'VIP' tickets left."}</code>.
+      The frontend turns each <code>code</code> into an English or Korean message (<code>err.*</code> keys in <code>shared/i18n</code>).</div>
+  </section>
+
+  <!-- ================= DATA ================= -->
+  <section id="data">
+    <p class="kicker">8 · Data model</p>
+    <h2>9 tables and how they connect</h2>
+    <p class="lead">The schema is written by hand in <code>V1__init_schema.sql</code> and created by <b>Flyway</b>.
+      Hibernate only <i>checks</i> that the Java classes match it (<code>ddl-auto: validate</code>).</p>
+    <div class="card scroll-x" style="margin-top:16px">
+      <svg class="diagram" viewBox="0 0 1000 640" role="img" aria-label="Database tables and relations">
+        <defs>
+          <marker id="many" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="10" markerHeight="10" orient="auto">
+            <path d="M0,6 L11,6 M11,0 L1,6 L11,12" stroke="currentColor" fill="none" stroke-width="1.6" style="color:var(--muted)"></path>
+          </marker>
+        </defs>
+        <style>
+          .tbl rect.h { fill: var(--accent); } .tbl text.h { fill: #fff; font-weight: 800; font-size: 13px; }
+          .tbl rect.b { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+          .tbl text.c { font-size: 11.5px; } .tbl text.k { font-size: 11.5px; fill: var(--accent-ink); font-weight: 700; }
+          .rel { stroke: var(--muted); stroke-width: 1.8; fill: none; marker-end: url(#many); }
+          .rl { font-size: 10.5px; fill: var(--muted); }
+        </style>
+        <!-- drawn first so the tables sit on top of it -->
+        <path class="rel" d="M240,60 C400,22 650,22 760,60"/><text class="rl" x="440" y="20">places (user → orders)</text>
+        <!-- users -->
+        <g class="tbl"><rect class="b" x="30" y="30" width="210" height="150" rx="12"/><rect class="h" x="30" y="30" width="210" height="30" rx="12"/><rect class="h" x="30" y="45" width="210" height="15"/>
+          <text class="h" x="45" y="50">users</text>
+          <text class="k" x="45" y="80">id (PK)</text><text class="c" x="45" y="98">name</text><text class="c" x="45" y="116">email (unique)</text><text class="c" x="45" y="134">password_hash</text><text class="c" x="45" y="152">created_at</text></g>
+        <!-- user_roles -->
+        <g class="tbl"><rect class="b" x="30" y="240" width="210" height="100" rx="12"/><rect class="h" x="30" y="240" width="210" height="30" rx="12"/><rect class="h" x="30" y="255" width="210" height="15"/>
+          <text class="h" x="45" y="260">user_roles</text>
+          <text class="k" x="45" y="290">user_id (FK)</text><text class="c" x="45" y="308">role: ATTENDEE | ORGANIZER</text><text class="c" x="45" y="326">      | STAFF</text></g>
+        <!-- event_staff -->
+        <g class="tbl"><rect class="b" x="30" y="390" width="210" height="90" rx="12"/><rect class="h" x="30" y="390" width="210" height="30" rx="12"/><rect class="h" x="30" y="405" width="210" height="15"/>
+          <text class="h" x="45" y="410">event_staff</text>
+          <text class="k" x="45" y="440">event_id (FK)</text><text class="k" x="45" y="458">user_id (FK)</text></g>
+        <!-- events -->
+        <g class="tbl"><rect class="b" x="390" y="30" width="220" height="200" rx="12"/><rect class="h" x="390" y="30" width="220" height="30" rx="12"/><rect class="h" x="390" y="45" width="220" height="15"/>
+          <text class="h" x="405" y="50">events</text>
+          <text class="k" x="405" y="80">id (PK) · organizer_id (FK)</text><text class="c" x="405" y="98">name · venue · description</text><text class="c" x="405" y="116">start_at · end_at</text><text class="c" x="405" y="134">sales_start_at  ← ticket open</text><text class="c" x="405" y="152">sales_end_at</text><text class="c" x="405" y="170">status: DRAFT | PUBLISHED</text><text class="c" x="405" y="186">            | CANCELLED</text><text class="c" x="405" y="206">created_at · updated_at</text></g>
+        <!-- ticket_types -->
+        <g class="tbl"><rect class="b" x="390" y="290" width="220" height="130" rx="12"/><rect class="h" x="390" y="290" width="220" height="30" rx="12"/><rect class="h" x="390" y="305" width="220" height="15"/>
+          <text class="h" x="405" y="310">ticket_types</text>
+          <text class="k" x="405" y="340">id (PK) · event_id (FK)</text><text class="c" x="405" y="358">name ("VIP", "R")</text><text class="c" x="405" y="376">price (NUMERIC, never double)</text><text class="c" x="405" y="394">total_available · sold</text><text class="c" x="405" y="410" style="fill:var(--hot);font-weight:700">↑ v2 concurrency target</text></g>
+        <!-- ticket_validations -->
+        <g class="tbl"><rect class="b" x="390" y="480" width="220" height="140" rx="12"/><rect class="h" x="390" y="480" width="220" height="30" rx="12"/><rect class="h" x="390" y="495" width="220" height="15"/>
+          <text class="h" x="405" y="500">ticket_validations</text>
+          <text class="k" x="405" y="530">ticket_id · event_id · staff_id</text><text class="c" x="405" y="548">method: QR | MANUAL</text><text class="c" x="405" y="566">status: VALID | INVALID</text><text class="c" x="405" y="584">reason: ALREADY_USED, …</text><text class="c" x="405" y="602">validated_at (every scan saved)</text></g>
+        <!-- orders -->
+        <g class="tbl"><rect class="b" x="760" y="30" width="210" height="150" rx="12"/><rect class="h" x="760" y="30" width="210" height="30" rx="12"/><rect class="h" x="760" y="45" width="210" height="15"/>
+          <text class="h" x="775" y="50">orders</text>
+          <text class="k" x="775" y="80">id · user_id · event_id</text><text class="c" x="775" y="98">total_amount (copied)</text><text class="c" x="775" y="116">status: PAID (v1) …</text><text class="c" x="775" y="134">created_at</text><text class="c" x="775" y="152">expires_at (v5 hold)</text></g>
+        <!-- tickets -->
+        <g class="tbl"><rect class="b" x="760" y="250" width="210" height="130" rx="12"/><rect class="h" x="760" y="250" width="210" height="30" rx="12"/><rect class="h" x="760" y="265" width="210" height="15"/>
+          <text class="h" x="775" y="270">tickets</text>
+          <text class="k" x="775" y="300">id · order_id · ticket_type_id</text><text class="c" x="775" y="318">price (snapshot)</text><text class="c" x="775" y="336">status: ACTIVE | USED</text><text class="c" x="775" y="354">          | CANCELLED</text></g>
+        <!-- qr_codes -->
+        <g class="tbl"><rect class="b" x="760" y="450" width="210" height="110" rx="12"/><rect class="h" x="760" y="450" width="210" height="30" rx="12"/><rect class="h" x="760" y="465" width="210" height="15"/>
+          <text class="h" x="775" y="470">qr_codes</text>
+          <text class="k" x="775" y="500">id · ticket_id (unique)</text><text class="c" x="775" y="518">qr_value (random token)</text><text class="c" x="775" y="536">status · generated_at</text></g>
+
+        <!-- relations (arrow head = "many" side) -->
+        <path class="rel" d="M135,180 L135,240"/><text class="rl" x="142" y="214">has roles</text>
+        <path class="rel" d="M240,90 L390,90"/><text class="rl" x="270" y="82">organizes</text>
+        <path class="rel" d="M30,110 C6,110 6,435 30,435"/><text class="rl" x="8" y="372" transform="rotate(-90 8 372)">works at</text>
+        <path class="rel" d="M390,215 C320,215 320,435 240,435"/><text class="rl" x="262" y="425">staff of</text>
+        <path class="rel" d="M500,230 L500,290"/><text class="rl" x="508" y="264">offers</text>
+        <path class="rel" d="M610,120 L760,120"/><text class="rl" x="640" y="112">event of order</text>
+        <path class="rel" d="M865,180 L865,250"/><text class="rl" x="872" y="218">contains</text>
+        <path class="rel" d="M610,350 L760,330"/><text class="rl" x="640" y="330">type of</text>
+        <path class="rel" d="M865,380 L865,450"/><text class="rl" x="872" y="418">has one</text>
+        <path class="rel" d="M760,370 C700,420 680,480 610,530"/><text class="rl" x="680" y="450">is scanned</text>
+      </svg>
+    </div>
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card small"><b>Why are prices copied</b> into <code>tickets.price</code> and <code>orders.total_amount</code>?
+        <span class="muted">If the organizer changes a price tomorrow, old orders must keep the price the fan really paid.</span></div>
+      <div class="card small"><b>Why a random QR token</b> instead of the ticket id?
+        <span class="muted">So nobody can make a fake ticket by guessing ids. The token is 48 random hex characters.</span></div>
+    </div>
+  </section>
+
+  <!-- ================= RUN ================= -->
+  <section id="run">
+    <p class="kicker">9 · Run &amp; test</p>
+    <h2>Start it in three steps</h2>
+    <div class="grid g3" style="margin-top:20px">
+      <div class="card"><span class="pill p-db">1 · Database</span>
+        <pre class="mono small" style="margin:12px 0 0;white-space:pre-wrap">cd ticket-rush
+docker compose up -d</pre>
+        <p class="muted small">PostgreSQL 17 on port 5434. Docker Desktop must be open.</p></div>
+      <div class="card"><span class="pill p-be">2 · Backend</span>
+        <pre class="mono small" style="margin:12px 0 0;white-space:pre-wrap">cd ticketrush
+./mvnw spring-boot:run</pre>
+        <p class="muted small">Or press ▶ on <code>TicketrushApplication</code> in IntelliJ. Port 8080.</p></div>
+      <div class="card"><span class="pill p-fe">3 · Frontend</span>
+        <pre class="mono small" style="margin:12px 0 0;white-space:pre-wrap">cd frontend
+npm install
+npm run dev</pre>
+        <p class="muted small">Open <b>http://localhost:3000</b> (use "localhost").</p></div>
+    </div>
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card"><h3>Tests</h3>
+        <p class="small"><b>Backend — 21 integration tests</b> (<code>./mvnw test</code>): they start the real app with
+          real security and a real database (H2 in PostgreSQL mode) and call the API like a client. Files: <code>AuthFlowTest</code>,
+          <code>EventFlowTest</code>, <code>OrderFlowTest</code>, <code>CheckInFlowTest</code>.</p>
+        <p class="small"><b>Frontend — 21 tests</b> (<code>npm test</code>, Vitest): cart rules, date/price formatting,
+          form validation, the login form (EN + KO), and "Korean has exactly the same keys as English".</p></div>
+      <div class="card"><h3>Demo accounts</h3>
+        <p class="small">Password for all: <code>password123</code></p>
+        <table><tbody>
+          <tr><td><code>fan@demo.com</code></td><td>Attendee</td></tr>
+          <tr><td><code>org@demo.com</code></td><td>Organizer (Rush Live)</td></tr>
+          <tr><td><code>planner@demo.com</code></td><td>Organizer (Winter Concert 2026)</td></tr>
+        </tbody></table></div>
+    </div>
+  </section>
+
+  <!-- ================= WORDS ================= -->
+  <section id="words">
+    <p class="kicker">10 · Words you'll meet</p>
+    <h2>Mini dictionary</h2>
+    <div class="explorer-tools"><input id="glossSearch" type="search" placeholder="Search a word…" aria-label="Search words" /></div>
+    <div class="gloss" id="gloss"></div>
+  </section>
+
+  <!-- ================= VERSIONS ================= -->
+  <section id="versions">
+    <p class="kicker">11 · Versions</p>
+    <h2>Where we are on the roadmap</h2>
+    <p class="lead">Each version solves one real problem and ends with proof (a test or a number). Details in <code>ROADMAP.md</code>.</p>
+    <div class="timeline" id="timeline" style="margin-top:20px"></div>
+    <div class="note"><b>⚠ Known weak point (on purpose, fixed in v2):</b> <code>TicketType.sell()</code> does
+      "read → check → write" with no lock. If 1,000 people click "Buy" at the same moment, two of them can both see
+      "1 left" and both buy it → <b>overselling</b>. v2 will prove this with a test, then fix it.</div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    TicketRush Map · v1 · 2026-11-18 · Open this file in any browser, no internet needed.<br/>
+    <b>Updating:</b> after each version, update the <code>DATA</code> section at the bottom of this file
+    (steps, tree, pages, API, versions) and the stats at the top.
+  </div>
+</footer>
+
+<script>
+/* ======================================================================
+   DATA — update this part after every version.
+   ====================================================================== */
+
+const FLOWS = {
+  home: {
+    label: "🏠 Open the home page",
+    steps: [
+      { at: "n-browser", layer: "fe", title: "You type localhost:3000", text: "The browser asks the Next.js server for the page \"/\". No login needed — event lists are public." },
+      { at: "n-rsc", layer: "fe", title: "Next.js runs the page on the server", text: "app/page.tsx is a Server Component. It shows the hero right away and puts the event list inside <Suspense>, so the page can stream: first the frame, then the data.", files: ["frontend/src/app/page.tsx", "frontend/src/app/home-hero.tsx"] },
+      { at: "n-rsc", layer: "net", title: "The server calls Spring directly", text: "fetchPublishedEvents() sends GET /api/v1/events?page=0&size=12 straight to localhost:8080. This happens server-to-server, so the browser never waits for it separately.", files: ["frontend/src/shared/api/server-api.ts"], code: "GET http://localhost:8080/api/v1/events?page=0&size=12" },
+      { at: "s-security", layer: "be", title: "Security lets it through", text: "SecurityConfig says GET /api/v1/events is public (permitAll). No token needed.", files: ["ticketrush/…/auth/SecurityConfig.java"] },
+      { at: "s-controller", layer: "be", title: "EventController.list()", text: "Reads ?q= (search) and paging, then calls the service.", files: ["ticketrush/…/event/EventController.java"] },
+      { at: "s-service", layer: "be", title: "EventService.listPublished()", text: "Only PUBLISHED events, searched by name if q is given. Read-only transaction.", files: ["ticketrush/…/event/EventService.java"] },
+      { at: "s-repo", layer: "be", title: "EventRepository → SQL", text: "Spring Data writes the SQL from the method name findByStatusAndNameContainingIgnoreCase, with LIMIT/OFFSET for paging.", files: ["ticketrush/…/event/EventRepository.java"] },
+      { at: "db", layer: "db", title: "PostgreSQL returns rows", text: "Uses the index idx_events_status_start to find published events fast.", code: "SELECT … FROM events WHERE status='PUBLISHED' ORDER BY start_at LIMIT 12" },
+      { at: "n-rsc", layer: "fe", title: "HTML with the events is sent", text: "Data goes back as JSON (PageResponse), Next.js renders EventGrid into HTML and streams it. Search engines see real event names → good SEO.", files: ["frontend/src/app/event-grid.tsx", "frontend/src/entities/event/ui.tsx"] },
+      { at: "n-client", layer: "fe", title: "React wakes up (hydration)", text: "The browser loads JavaScript and connects it to the HTML. Now buttons work, and your saved language (EN/KO) and theme are applied.", files: ["frontend/src/shared/i18n/use-t.ts", "frontend/src/shared/prefs/prefs-store.ts"] },
+    ],
+  },
+  buy: {
+    label: "🎟 Buy 2 tickets",
+    steps: [
+      { at: "n-client", layer: "fe", title: "You pick tickets", text: "The + / − buttons change quantities in React state. cart.ts makes sure you never pass the stock left or the limit of 4 per order.", files: ["frontend/src/features/order/buy-panel.tsx", "frontend/src/features/order/cart.ts"] },
+      { at: "n-client", layer: "fe", title: "You click \"Buy · ₩330,000\"", text: "A TanStack Query useMutation calls orderApi.place({ eventId, items }).", files: ["frontend/src/entities/ticket/api.ts"] },
+      { at: "n-client", layer: "fe", title: "axios adds your login token", text: "http.ts reads the JWT from the Zustand session store and adds it as a header. The request goes to /api on the same address.", files: ["frontend/src/shared/api/http.ts", "frontend/src/shared/session/session-store.ts"], code: "POST /api/v1/orders\nAuthorization: Bearer eyJhbGciOi…\n{\"eventId\":\"…\",\"items\":[{\"ticketTypeId\":\"…\",\"quantity\":2}]}" },
+      { at: "n-proxy", layer: "net", title: "Next.js forwards it to Spring", text: "The rewrite rule in next.config.ts sends /api/* to localhost:8080. The browser thinks it's one server → no CORS problems.", files: ["frontend/next.config.ts"] },
+      { at: "s-security", layer: "be", title: "Is the token real?", text: "Spring's OAuth2 Resource Server checks the JWT signature (HS256), expiry and issuer. Bad token → 401. The user id comes from the token's \"sub\" field.", files: ["ticketrush/…/auth/SecurityConfig.java", "ticketrush/…/auth/CurrentUser.java"] },
+      { at: "s-controller", layer: "be", title: "OrderController checks the JSON", text: "@Valid PlaceOrderRequest: eventId must exist in the body, quantity 1–10, at least one item. Bad input → 400 with field errors.", files: ["ticketrush/…/order/OrderController.java", "ticketrush/…/order/dto/PlaceOrderRequest.java"] },
+      { at: "s-service", layer: "be", title: "OrderService.placeOrder() — the rules", text: "Starts a transaction. Merges duplicate items, checks max 4 tickets, loads the event with its ticket types in one query (@EntityGraph), and checks the sales window (isOnSale).", files: ["ticketrush/…/order/OrderService.java"] },
+      { at: "s-entity", layer: "be", title: "TicketType.sell(2)", text: "Checks remaining stock and adds to \"sold\". Not enough → TICKET_SOLD_OUT (409). ⚠ This is the v2 problem: no lock yet, so two buyers at the same moment can both pass the check.", files: ["ticketrush/…/event/TicketType.java"] },
+      { at: "s-entity", layer: "be", title: "Order + Tickets + QR codes are built", text: "new Order(user, event). For each ticket: new Ticket(type) copies the price and creates a QrCode with a random token. The order becomes PAID (no payment yet in v1).", files: ["ticketrush/…/order/Order.java", "ticketrush/…/ticket/Ticket.java", "ticketrush/…/ticket/QrCode.java"] },
+      { at: "s-repo", layer: "be", title: "orderRepository.saveAndFlush()", text: "Cascade saves the order, its tickets and their QR codes in one go.", files: ["ticketrush/…/order/OrderRepository.java"] },
+      { at: "db", layer: "db", title: "One transaction in PostgreSQL", text: "UPDATE ticket_types (sold), INSERT orders, tickets, qr_codes — all succeed together, or all are rolled back.", code: "BEGIN;\nUPDATE ticket_types SET sold = 2 …;\nINSERT INTO orders …; INSERT INTO tickets …; INSERT INTO qr_codes …;\nCOMMIT;" },
+      { at: "s-controller", layer: "be", title: "201 Created + JSON comes back", text: "OrderResponse with the tickets and QR values. If anything failed, GlobalExceptionHandler returns a Problem Details error with a stable code.", files: ["ticketrush/…/common/exception/GlobalExceptionHandler.java"] },
+      { at: "n-client", layer: "fe", title: "\"You're in!\"", text: "onSuccess: old \"my tickets\" data is marked stale (invalidateQueries) and you go to /my/orders/{id}?new=1. Errors are shown in your language via errorMessage().", files: ["frontend/src/app/my/orders/[orderId]/order-detail-view.tsx", "frontend/src/shared/api/errors.ts"] },
+    ],
+  },
+  scan: {
+    label: "📱 Scan at the gate",
+    steps: [
+      { at: "n-client", layer: "fe", title: "Staff opens the gate screen", text: "/check-in/{eventId}. The input is always focused. A USB/Bluetooth QR scanner works like a keyboard: it types the code and presses Enter.", files: ["frontend/src/features/check-in/scanner.tsx"] },
+      { at: "n-proxy", layer: "net", title: "POST the QR value", text: "Through the same axios client and /api proxy, with the staff member's JWT.", code: "POST /api/v1/events/{eventId}/validations\n{\"method\":\"QR\",\"qrValue\":\"cd68addc…\"}" },
+      { at: "s-security", layer: "be", title: "Logged in?", text: "Any logged-in user may call it — the real check (is this person staff for THIS event?) happens in the service, using the database, not the token." },
+      { at: "s-service", layer: "be", title: "CheckInService.validate()", text: "1) Is the caller staff or organizer of this event? If not → 403. 2) Find the ticket by QR token. 3) Decide: NOT_FOUND, WRONG_EVENT, ALREADY_USED, CANCELLED, or valid.", files: ["ticketrush/…/checkin/CheckInService.java"] },
+      { at: "s-entity", layer: "be", title: "Valid → ticket.markUsed()", text: "The ticket becomes USED, so the next scan of the same QR will be rejected.", files: ["ticketrush/…/ticket/Ticket.java"] },
+      { at: "db", layer: "db", title: "Every scan is saved", text: "A TicketValidation row is inserted for every scan — valid or not. That's an audit log, and it feeds \"Checked in\" on the sales dashboard.", files: ["ticketrush/…/checkin/TicketValidation.java"] },
+      { at: "n-client", layer: "fe", title: "Big green or big red", text: "Always 200 OK — a rejected ticket is a normal result at a gate, not a server error. The screen shows \"Let them in\" or \"Denied · Already checked in\" and refocuses the input for the next person." },
+    ],
+  },
+};
+
+const JOURNEYS = {
+  attendee: { label: "🎉 Attendee", steps: [
+    ["Sign up as \"Attend\"", "/signup", "POST /auth/signup → POST /auth/login", "A user row + role ATTENDEE. Signed in right away (JWT saved)."],
+    ["Browse & search events", "/", "GET /events?q=", "Server-rendered list. Cards show sale state and ticket-open time."],
+    ["Open an event", "/events/{id}", "GET /events/{id}", "Ticket types with live stock. Countdown if ticket open hasn't started."],
+    ["Buy up to 4 tickets", "/events/{id}", "POST /orders", "Order PAID + tickets + QR codes. Stock goes down."],
+    ["See the result", "/my/orders/{id}", "GET /orders/{id}", "\"You're in!\" + ticket cards."],
+    ["Show the QR at the gate", "/my/tickets", "GET /tickets, GET /tickets/{id}/qr", "PNG made by ZXing on the backend. After the scan the ticket shows \"Checked in\"."],
+  ]},
+  organizer: { label: "📣 Organizer", steps: [
+    ["Sign up as \"Organize\"", "/signup", "POST /auth/signup", "Roles ATTENDEE + ORGANIZER. Lands on /organizer."],
+    ["Create an event (draft)", "/organizer/events/new", "POST /organizer/events", "Event DRAFT + ticket types. Dates are checked: open < sales end ≤ start < end."],
+    ["Edit while it's a draft", "/organizer/events/{id}/edit", "PUT /organizer/events/{id}", "Only DRAFT events can change (409 otherwise)."],
+    ["Publish", "/organizer/events/{id}", "POST …/publish", "DRAFT → PUBLISHED. Now visible to everyone."],
+    ["Add staff", "/organizer/events/{id}", "POST …/staff", "User gets the STAFF role + a row in event_staff."],
+    ["Watch sales live", "/organizer/events/{id}", "GET …/sales (every 10 s)", "GROUP BY query: sold, revenue, sell-through per ticket type, checked-in count."],
+    ["Cancel if needed", "/organizer/events/{id}", "POST …/cancel", "→ CANCELLED. Can't be undone."],
+  ]},
+  staff: { label: "🛂 Staff", steps: [
+    ["Get added by an organizer", "—", "POST /organizer/events/{id}/staff", "Log in again to see the Check-in menu (roles live in the token)."],
+    ["Enter the event ID", "/check-in", "—", "The organizer copies it from the manage page."],
+    ["Scan tickets", "/check-in/{eventId}", "POST /events/{id}/validations", "First scan: Let them in. Same ticket again: Denied · Already checked in."],
+  ]},
+};
+
+const TREE = [
+  { n: "ticket-rush/", d: "The whole project (one Git repository)", c: [
+    { n: "index.html", d: "This map" },
+    { n: "README.md", d: "How to run and test, tech stack, API list" },
+    { n: "DESIGN.md", d: "Actors, data model diagram, architecture" },
+    { n: "ROADMAP.md", d: "Versions v1–v10 + job-skills checklist" },
+    { n: "NOTES.md", d: "What was learned in each version + \"to study\" lists" },
+    { n: "docker-compose.yaml", d: "Starts PostgreSQL 17 on port 5434 (data kept in a Docker volume)" },
+    { n: "ticketrush/", d: "BACKEND — Spring Boot 4.1, Java 21, Maven", c: [
+      { n: "pom.xml", d: "Dependencies: web, JPA, security + OAuth2 resource server, validation, Flyway, actuator, springdoc, ZXing" },
+      { n: "src/main/resources/", d: "Settings and SQL", c: [
+        { n: "application.yml", d: "DB connection, JWT secret/expiry (2h), max 4 tickets per order, Swagger path" },
+        { n: "db/migration/V1__init_schema.sql", d: "The real schema: 9 tables, keys, indexes, CHECK rules. Flyway runs it once." },
+      ]},
+      { n: "src/main/java/com/devui/ticketrush/", d: "Java code, grouped by feature", c: [
+        { n: "TicketrushApplication.java", d: "main() — starts Spring" },
+        { n: "auth/", d: "Sign up, log in, JWT", c: [
+          { n: "SecurityConfig.java", d: "Which URLs are public, JWT encoder/decoder (HS256), roles from the \"roles\" claim, BCrypt passwords" },
+          { n: "TokenService.java", d: "Builds the JWT: sub = user id, name, email, roles, 2h expiry" },
+          { n: "AuthService.java", d: "Signup (email unique, role ATTENDEE[+ORGANIZER]), login (same error for wrong email or password)" },
+          { n: "AuthController.java", d: "POST /api/v1/auth/signup, /login" },
+          { n: "CurrentUser.java", d: "Reads the user id from the token" },
+          { n: "JwtProperties.java", d: "app.jwt.* settings; fails fast if the secret is too short" },
+          { n: "dto/", d: "SignupRequest, LoginRequest, TokenResponse (Java records)" },
+        ]},
+        { n: "user/", d: "Users and roles", c: [
+          { n: "User.java", d: "Entity: name, email, password hash, Set<Role>" },
+          { n: "Role.java", d: "ATTENDEE, ORGANIZER, STAFF" },
+          { n: "UserRepository.java", d: "findByEmail, existsByEmail" },
+          { n: "UserController.java", d: "GET /api/v1/users/me" },
+        ]},
+        { n: "event/", d: "Events, ticket types, sales report", c: [
+          { n: "Event.java", d: "Entity + rules: publish(), cancel(), update() only in DRAFT, isOnSale(now), schedule check" },
+          { n: "TicketType.java", d: "price, totalAvailable, sold; sell(qty) ⚠ v2 target" },
+          { n: "EventService.java", d: "Create/update/publish/cancel, add staff, list, sales report" },
+          { n: "EventController.java", d: "Public: GET /events, GET /events/{id}" },
+          { n: "OrganizerEventController.java", d: "ORGANIZER only: /organizer/events/** (@PreAuthorize)" },
+          { n: "EventRepository.java", d: "Paging queries, @EntityGraph to avoid N+1, the GROUP BY sales query" },
+          { n: "dto/", d: "EventRequest, EventResponse, EventSummaryResponse, SalesReportResponse, TicketTypeSalesRow, AddStaffRequest" },
+        ]},
+        { n: "order/", d: "Buying tickets", c: [
+          { n: "Order.java", d: "Entity: user, event, totalAmount, status, tickets" },
+          { n: "OrderService.java", d: "placeOrder(): limit 4, sales window, stock, build tickets, PAID" },
+          { n: "OrderController.java", d: "POST /orders, GET /orders, GET /orders/{id}" },
+          { n: "OrderRepository.java", d: "findByUserId (paged), findDetailedById" },
+          { n: "OrderStatus.java", d: "PENDING, PAID, CANCELLED, EXPIRED" },
+          { n: "dto/", d: "PlaceOrderRequest, OrderResponse, OrderSummaryResponse" },
+        ]},
+        { n: "ticket/", d: "Tickets and QR codes", c: [
+          { n: "Ticket.java", d: "Entity: price snapshot, status, markUsed()" },
+          { n: "QrCode.java", d: "Random 48-char token, unique" },
+          { n: "QrImageGenerator.java", d: "Draws the QR as a PNG with ZXing" },
+          { n: "TicketService.java", d: "My tickets, one ticket (owner only), QR PNG" },
+          { n: "TicketController.java", d: "GET /tickets, /tickets/{id}, /tickets/{id}/qr" },
+          { n: "TicketRepository.java · QrCodeRepository.java", d: "Queries with @EntityGraph" },
+        ]},
+        { n: "checkin/", d: "Gate scanning", c: [
+          { n: "CheckInService.java", d: "Staff check, find ticket, decide VALID/INVALID, mark USED, save every scan" },
+          { n: "CheckInController.java", d: "POST /events/{id}/validations (always 200)" },
+          { n: "TicketValidation.java", d: "Audit log entity (insert only)" },
+          { n: "InvalidReason.java", d: "NOT_FOUND, WRONG_EVENT, ALREADY_USED, CANCELLED" },
+        ]},
+        { n: "common/", d: "Shared plumbing", c: [
+          { n: "exception/ErrorCode.java", d: "Every business error: HTTP status + message" },
+          { n: "exception/GlobalExceptionHandler.java", d: "Turns exceptions into Problem Details JSON" },
+          { n: "web/PageResponse.java", d: "Stable JSON shape for paged lists" },
+          { n: "config/AppConfig.java", d: "Clock bean (testable time) + Swagger/OpenAPI setup" },
+        ]},
+      ]},
+      { n: "src/test/", d: "21 integration tests", c: [
+        { n: "support/IntegrationTest.java", d: "Base class: full Spring app + MockMvc + helpers (signup, createEvent, placeOrder)" },
+        { n: "flows/AuthFlowTest.java", d: "Signup, login, duplicate email, wrong password, validation errors, 401" },
+        { n: "flows/EventFlowTest.java", d: "Roles, drafts private, publish, edit rules, bad schedule" },
+        { n: "flows/OrderFlowTest.java", d: "Buy, sold out, limit 4, not on sale yet, QR image, sales report" },
+        { n: "flows/CheckInFlowTest.java", d: "Valid once, ALREADY_USED, NOT_FOUND, WRONG_EVENT, non-staff 403" },
+        { n: "resources/application-test.yml", d: "H2 in-memory database in PostgreSQL mode" },
+      ]},
+    ]},
+    { n: "frontend/", d: "FRONTEND — Next.js 16, React 19, TypeScript", c: [
+      { n: "package.json", d: "Scripts (dev, build, test, lint) + libraries" },
+      { n: "next.config.ts", d: "/api → Spring rewrite, allowed dev addresses, Cache Components" },
+      { n: "vitest.config.mts", d: "Test runner setup (jsdom)" },
+      { n: ".env.example", d: "BACKEND_URL=http://localhost:8080" },
+      { n: "README.md", d: "Frontend structure, decisions, design system" },
+      { n: "src/app/", d: "ROUTES — each folder is a URL", c: [
+        { n: "layout.tsx", d: "Root: fonts, theme script (no white flash), header, footer, providers" },
+        { n: "providers.tsx", d: "TanStack Query client + PrefsSync (theme/lang on <html>)" },
+        { n: "globals.css", d: "Design tokens (colors) for light + dark, animations, ticket notch" },
+        { n: "page.tsx", d: "/ — home (Server Component fetches events)" },
+        { n: "home-hero.tsx · event-grid.tsx · event-search.tsx", d: "Hero + ticker, event grid, search box" },
+        { n: "events/[eventId]/", d: "/events/{id} — event detail (server fetch) + buy panel" },
+        { n: "login/ · signup/", d: "Auth pages" },
+        { n: "my/", d: "/my/tickets, /my/orders, /my/orders/{id} (login required)" },
+        { n: "organizer/", d: "/organizer… — list, new, manage + sales dashboard + staff, edit" },
+        { n: "check-in/", d: "/check-in and /check-in/{eventId} gate screen" },
+        { n: "error.tsx · not-found.tsx", d: "Error page and 404" },
+      ]},
+      { n: "src/widgets/", d: "Big shared blocks", c: [
+        { n: "site-header.tsx", d: "Logo, menu by role, EN|KO, Light|Dark|System, mobile menu" },
+        { n: "site-footer.tsx", d: "Footer" },
+      ]},
+      { n: "src/features/", d: "USER ACTIONS", c: [
+        { n: "auth/", d: "Login/signup forms + Zod rules, AuthGuard (login/role check), split auth layout" },
+        { n: "order/", d: "buy-panel.tsx (ticket picker, countdown) + cart.ts (pure rules, tested)" },
+        { n: "ticket/ticket-card.tsx", d: "Mobile-ticket card with QR" },
+        { n: "event-form/", d: "Create/edit form: React Hook Form + useFieldArray + Zod (same rules as backend)" },
+        { n: "check-in/", d: "Gate scanner screen + API call" },
+      ]},
+      { n: "src/entities/", d: "BUSINESS OBJECTS", c: [
+        { n: "event/api.ts", d: "Organizer API calls + query key factory" },
+        { n: "event/ui.tsx", d: "EventCard (ticket stub), Poster (generated art), status badges" },
+        { n: "ticket/api.ts", d: "My tickets/orders queries, QR loading, place order" },
+        { n: "ticket/ui.tsx", d: "Ticket and order status badges" },
+      ]},
+      { n: "src/shared/", d: "NO BUSINESS MEANING", c: [
+        { n: "api/http.ts", d: "axios: base /api/v1, adds JWT, logs out on 401" },
+        { n: "api/server-api.ts", d: "Server-side fetch for public pages" },
+        { n: "api/types.ts", d: "TypeScript types that mirror the Java DTOs" },
+        { n: "api/errors.ts", d: "Backend error code → translated message" },
+        { n: "i18n/en.ts · ko.ts", d: "All UI text in English and Korean (same keys, checked by TypeScript)" },
+        { n: "i18n/use-t.ts · use-format.ts", d: "t(\"key\") and date/price formatting in the current language" },
+        { n: "session/", d: "Login token store (Zustand + localStorage), auto-logout when it expires" },
+        { n: "prefs/", d: "Language + theme store, the no-flash script" },
+        { n: "lib/", d: "format.ts (KST dates, ₩/원, poster colors), use-now (countdown), use-mounted" },
+        { n: "ui/", d: "Button, Field/Input, Card, Badge, Pager, Spinner, Logo, EN|KO + theme switches" },
+      ]},
+    ]},
+  ]},
+];
+
+const PAGES = [
+  ["/", "Anyone", "Hero, ticker, event cards, search", "server", "app/page.tsx"],
+  ["/events/{id}", "Anyone", "Poster, details, ticket picker, countdown", "server", "app/events/[eventId]/page.tsx"],
+  ["/login", "Anyone", "Log in", "—", "features/auth/login-form.tsx"],
+  ["/signup", "Anyone", "Sign up as attendee or organizer", "—", "features/auth/signup-form.tsx"],
+  ["/my/tickets", "Logged in", "Mobile tickets with QR", "client", "app/my/tickets/my-tickets-view.tsx"],
+  ["/my/orders", "Logged in", "Order history", "client", "app/my/orders/my-orders-view.tsx"],
+  ["/my/orders/{id}", "Owner", "\"You're in!\" + the order's tickets", "client", "app/my/orders/[orderId]/order-detail-view.tsx"],
+  ["/organizer", "Organizer", "My events list", "client", "app/organizer/organizer-events-view.tsx"],
+  ["/organizer/events/new", "Organizer", "Create event form", "client", "app/organizer/events/new/page.tsx"],
+  ["/organizer/events/{id}", "Owner", "Publish/cancel, live sales, staff, gate link", "client", "…/[eventId]/manage-event-view.tsx"],
+  ["/organizer/events/{id}/edit", "Owner", "Edit a draft", "client", "…/[eventId]/edit/edit-event-view.tsx"],
+  ["/check-in", "Logged in", "Enter event ID", "—", "app/check-in/page.tsx"],
+  ["/check-in/{eventId}", "Staff / organizer", "Gate scanner", "client", "features/check-in/scanner.tsx"],
+];
+
+const API = [
+  ["POST", "/api/v1/auth/signup", "Anyone", "Create an account", "AuthController"],
+  ["POST", "/api/v1/auth/login", "Anyone", "Get a JWT (2 hours)", "AuthController"],
+  ["GET", "/api/v1/users/me", "Logged in", "My profile + roles", "UserController"],
+  ["GET", "/api/v1/events?q=&page=&size=", "Anyone", "Published events (paged, search)", "EventController"],
+  ["GET", "/api/v1/events/{id}", "Anyone", "One event + ticket types + stock", "EventController"],
+  ["POST · GET", "/api/v1/organizer/events", "Organizer", "Create (draft) · list mine", "OrganizerEventController"],
+  ["GET · PUT", "/api/v1/organizer/events/{id}", "Owner", "Read · edit (draft only)", "OrganizerEventController"],
+  ["POST", "/api/v1/organizer/events/{id}/publish · /cancel · /staff", "Owner", "Change status · add staff", "OrganizerEventController"],
+  ["GET", "/api/v1/organizer/events/{id}/sales", "Owner", "Sales report (GROUP BY)", "OrganizerEventController"],
+  ["POST", "/api/v1/orders", "Logged in", "Buy tickets", "OrderController"],
+  ["GET", "/api/v1/orders · /orders/{id}", "Owner", "My orders · one order", "OrderController"],
+  ["GET", "/api/v1/tickets · /{id} · /{id}/qr", "Owner", "My tickets · one ticket · QR PNG", "TicketController"],
+  ["POST", "/api/v1/events/{id}/validations", "Staff / organizer", "Scan a ticket at the gate", "CheckInController"],
+];
+
+const WORDS = [
+  ["API / endpoint", "A URL the backend answers, like POST /api/v1/orders. The frontend and backend talk only through these."],
+  ["JSON", "The text format used to send data: {\"name\": \"Rush Live\"}."],
+  ["JWT (JSON Web Token)", "Your \"entry wristband\" after login. A signed text with your id and roles. Sent with every request: Authorization: Bearer <token>. The backend checks the signature, so it can't be faked."],
+  ["Role", "What you're allowed to do: ATTENDEE, ORGANIZER, STAFF. One user can have several."],
+  ["Spring Boot", "A Java framework that starts a web server and wires your classes together (dependency injection)."],
+  ["Controller / Service / Repository", "Backend layers: HTTP in/out · business rules · database access."],
+  ["Entity", "A Java class that maps to a database table (with @Entity). Here entities also hold their own rules."],
+  ["JPA / Hibernate", "Turns Java objects into SQL and back, so you rarely write SQL by hand."],
+  ["Transaction (@Transactional)", "A group of database changes that succeed together or are all undone. Buying = update stock + insert order + tickets, all or nothing."],
+  ["N+1 problem", "Loading a list, then running 1 extra query per item. Fixed here with @EntityGraph (load related data in one query)."],
+  ["Flyway / migration", "Versioned SQL files that build the database. V1__init_schema.sql runs once; V2 will add changes later."],
+  ["Problem Details (RFC 9457)", "A standard JSON shape for errors: status, title, detail, + our code (e.g. TICKET_SOLD_OUT)."],
+  ["Concurrency / race condition", "Many requests touching the same data at the same moment. Without care, two buyers can take the last seat → overselling. That's v2."],
+  ["Next.js", "A React framework. Folders in app/ become URLs. Can build HTML on the server."],
+  ["Server Component", "A React component that runs only on the server. Can fetch data directly; sends ready HTML."],
+  ["Client Component", "A component that runs in the browser (\"use client\"). Needed for clicks, forms and state."],
+  ["Hydration", "When the browser's React \"wakes up\" server HTML and connects buttons. If it fails, the page looks fine but nothing clicks."],
+  ["TanStack Query", "Fetches and caches server data in the browser: loading/error states, refresh after changes."],
+  ["Zustand", "A tiny store for client-only state: here the login token, language and theme."],
+  ["Rewrite / proxy", "Next.js forwards /api/* to Spring, so the browser talks to one address. Avoids CORS."],
+  ["CORS", "A browser safety rule that blocks calls to a different address unless the server allows it."],
+  ["i18n", "\"Internationalization\" (i + 18 letters + n): supporting several languages."],
+  ["Design tokens", "Named colors like --accent. Dark mode just changes their values."],
+  ["Docker / docker compose", "Runs programs (like PostgreSQL) in isolated containers with one command."],
+  ["Integration test", "A test that runs the real app (security, database) and calls it like a user would."],
+];
+
+const VERSIONS = [
+  ["v1", "Core app + frontend (EN/KO, dark mode)", "done"],
+  ["v2", "Overselling under concurrency (locks, atomic update)", "next"],
+  ["v3", "Docker images + Testcontainers + GitHub Actions CI", "todo"],
+  ["v4", "Redis cache + waiting queue (대기열)", "todo"],
+  ["v5", "5-minute hold + payment (Toss sandbox) + idempotency", "todo"],
+  ["v6", "Kafka + outbox (async jobs)", "todo"],
+  ["v7", "Load test (k6), indexes, Prometheus + Grafana", "todo"],
+  ["v8", "Seat selection (Venue → Section → Seat)", "todo"],
+  ["v9", "Spring AI event assistant", "todo"],
+  ["v10", "Deploy to AWS (live URL)", "todo"],
+];
+
+/* ======================================================================
+   UI code — usually no need to change below this line.
+   ====================================================================== */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const LAYER = { fe: ["p-fe", "Frontend"], be: ["p-be", "Backend"], db: ["p-db", "Database"], net: ["p-net", "Network"] };
+
+/* theme */
+(function () {
+  const root = document.documentElement;
+  let saved = null;
+  try { saved = localStorage.getItem("tr-map-theme"); } catch (e) {}
+  if (saved) root.dataset.theme = saved;
+  $("#themeBtn").addEventListener("click", () => {
+    const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    root.dataset.theme = dark ? "light" : "dark";
+    try { localStorage.setItem("tr-map-theme", root.dataset.theme); } catch (e) {}
+  });
+})();
+
+/* flows */
+(function () {
+  let flowKey = "buy", i = 0;
+  const tabs = $("#flowTabs");
+  Object.entries(FLOWS).forEach(([key, f]) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.role = "tab"; b.textContent = f.label; b.dataset.key = key;
+    b.addEventListener("click", () => { flowKey = key; i = 0; render(); });
+    tabs.appendChild(b);
+  });
+  function render() {
+    const steps = FLOWS[flowKey].steps, s = steps[i];
+    tabs.querySelectorAll("button").forEach((b) => b.setAttribute("aria-selected", b.dataset.key === flowKey));
+    $("#stepList").innerHTML = steps.map((st, k) =>
+      `<li><button type="button" data-k="${k}" ${k === i ? 'aria-current="step"' : ""}><span class="n">${k + 1}</span><span><span class="t">${esc(st.title)}</span><br><span class="muted small">${LAYER[st.layer][1]}</span></span></button></li>`).join("");
+    $("#stepList").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { i = +b.dataset.k; render(); }));
+    const [cls, name] = LAYER[s.layer];
+    $("#stepLayer").className = "pill " + cls; $("#stepLayer").textContent = name;
+    $("#stepTitle").textContent = `${i + 1}. ${s.title}`;
+    $("#stepText").textContent = s.text;
+    $("#stepFiles").innerHTML = (s.files || []).map((f) => `<code>${esc(f)}</code>`).join("");
+    const code = $("#stepCode"); code.hidden = !s.code; code.textContent = s.code || "";
+    $("#stepCount").textContent = `${i + 1} / ${steps.length}`;
+    $("#prevBtn").disabled = i === 0; $("#nextBtn").disabled = i === steps.length - 1;
+    document.querySelectorAll("#mini .node").forEach((n) => n.classList.toggle("active", n.dataset.id === s.at));
+    document.querySelectorAll("#arch .node").forEach((n) => n.classList.toggle("active", n.id === s.at));
+    // keep the current step visible inside the list only (never scroll the whole page)
+    const list = $("#stepList"), cur = list.querySelector("[aria-current]");
+    if (cur) {
+      const top = cur.offsetTop - list.offsetTop, bottom = top + cur.offsetHeight;
+      if (top < list.scrollTop) list.scrollTop = top;
+      else if (bottom > list.scrollTop + list.clientHeight) list.scrollTop = bottom - list.clientHeight;
+    }
+  }
+  $("#prevBtn").addEventListener("click", () => { if (i > 0) { i--; render(); } });
+  $("#nextBtn").addEventListener("click", () => { if (i < FLOWS[flowKey].steps.length - 1) { i++; render(); } });
+  render();
+})();
+
+/* journeys */
+(function () {
+  let key = "attendee";
+  const tabs = $("#journeyTabs");
+  Object.entries(JOURNEYS).forEach(([k, j]) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.role = "tab"; b.textContent = j.label; b.dataset.key = k;
+    b.addEventListener("click", () => { key = k; render(); });
+    tabs.appendChild(b);
+  });
+  function render() {
+    tabs.querySelectorAll("button").forEach((b) => b.setAttribute("aria-selected", b.dataset.key === key));
+    $("#journey").innerHTML = JOURNEYS[key].steps.map(([title, page, api, result], n) => `
+      <div class="jstep"><div class="dot">${n + 1}</div><div class="body">
+        <b>${esc(title)}</b>
+        <div class="meta"><span class="pill p-fe">page ${esc(page)}</span><span class="pill p-be">api ${esc(api)}</span></div>
+        <p class="muted small" style="margin-top:6px">${esc(result)}</p></div></div>`).join("");
+  }
+  render();
+})();
+
+/* folder tree */
+(function () {
+  const root = $("#tree");
+  function build(nodes, depth) {
+    return nodes.map((nd) => {
+      const row = `<span class="ic ${nd.c ? "folder" : ""}">${nd.c ? "" : "📄"}</span><span class="name">${esc(nd.n)}</span><span class="desc">${esc(nd.d)}</span>`;
+      if (nd.c) return `<li data-text="${esc((nd.n + " " + nd.d).toLowerCase())}"><details ${depth < 2 ? "open" : ""}><summary class="row">${row}</summary><ul>${build(nd.c, depth + 1)}</ul></details></li>`;
+      return `<li data-text="${esc((nd.n + " " + nd.d).toLowerCase())}"><div class="row">${row}</div></li>`;
+    }).join("");
+  }
+  root.innerHTML = build(TREE, 0);
+  const all = (open) => root.querySelectorAll("details").forEach((d) => (d.open = open));
+  $("#expandAll").addEventListener("click", () => all(true));
+  $("#collapseAll").addEventListener("click", () => all(false));
+  $("#treeSearch").addEventListener("input", (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    const items = [...root.querySelectorAll("li")];
+    items.forEach((li) => { li.hidden = false; li.classList.remove("hit"); });
+    if (!q) return;
+    items.forEach((li) => { li.hidden = true; });
+    items.forEach((li) => {
+      if (li.dataset.text.includes(q)) {
+        li.classList.add("hit");
+        // show the match, its parents, and its children
+        let p = li;
+        while (p && p !== root) { if (p.tagName === "LI") p.hidden = false; if (p.tagName === "DETAILS") p.open = true; p = p.parentElement; }
+        li.querySelectorAll("li").forEach((c) => (c.hidden = false));
+        const d = li.querySelector(":scope > details"); if (d) d.open = true;
+      }
+    });
+  });
+})();
+
+/* tables */
+$("#pagesTable").innerHTML = PAGES.map(([url, who, what, data, file]) =>
+  `<tr><td><code>${esc(url)}</code></td><td>${esc(who)}</td><td>${esc(what)}</td><td>${data === "server" ? '<span class="pill p-be">Server</span>' : data === "client" ? '<span class="pill p-fe">Client</span>' : '<span class="muted">—</span>'}</td><td class="muted small"><code>${esc(file)}</code></td></tr>`).join("");
+$("#apiTable").innerHTML = API.map(([m, path, who, what, code]) =>
+  `<tr><td>${m.split(" · ").map((x) => `<span class="method ${x}">${x}</span>`).join(" ")}</td><td><code>${esc(path)}</code></td><td>${esc(who)}</td><td>${esc(what)}</td><td class="muted small">${esc(code)}</td></tr>`).join("");
+
+/* glossary */
+function renderGloss(q) {
+  $("#gloss").innerHTML = WORDS.filter(([w, d]) => !q || (w + " " + d).toLowerCase().includes(q))
+    .map(([w, d]) => `<div class="card"><h3>${esc(w)}</h3><p class="muted small">${esc(d)}</p></div>`).join("") || '<p class="muted">No match.</p>';
+}
+renderGloss("");
+$("#glossSearch").addEventListener("input", (e) => renderGloss(e.target.value.trim().toLowerCase()));
+
+/* versions */
+$("#timeline").innerHTML = VERSIONS.map(([v, what, st]) =>
+  `<div class="tl ${st === "done" ? "done" : st === "next" ? "next" : ""}"><span class="v">${v}</span><span>${esc(what)}</span>${st === "done" ? '<span class="pill p-ok">✓ done</span>' : st === "next" ? '<span class="pill p-warn">next</span>' : '<span class="pill p-todo">planned</span>'}</div>`).join("");
+
+/* highlight current section in the top nav */
+(function () {
+  const links = [...document.querySelectorAll("#toc a")];
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach((en) => {
+      if (en.isIntersecting) links.forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#" + en.target.id));
+    });
+  }, { rootMargin: "-40% 0px -55% 0px" });
+  document.querySelectorAll("main section[id]").forEach((s) => obs.observe(s));
+})();
+</script>
+</body>
+</html>
