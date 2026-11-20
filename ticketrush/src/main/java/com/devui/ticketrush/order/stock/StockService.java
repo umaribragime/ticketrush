@@ -47,6 +47,9 @@ public class StockService {
             case PESSIMISTIC -> reservePessimistic(type, quantity);
             case OPTIMISTIC -> reserveOptimistic(type, quantity);
             case ATOMIC -> reserveAtomic(type, quantity);
+            // A switch STATEMENT over an enum doesn't have to cover every value. Without this line,
+            // a new strategy with a forgotten case would compile and silently reserve nothing (= overselling).
+            default -> throw new IllegalStateException("No stock reservation for strategy " + strategy);
         }
     }
 
